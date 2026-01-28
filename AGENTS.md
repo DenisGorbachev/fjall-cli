@@ -1957,7 +1957,7 @@ Proxy command example:
 name = "fjall-cli"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85.0"
+rust-version = "1.91.0"
 description = "A CLI for Fjall database"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/DenisGorbachev/fjall-cli"
@@ -1989,12 +1989,18 @@ summary = ""
 announcement = ""
 readme = { generate = false }
 
+[[bin]]
+name = "fjall"
+path = "src/main.rs"
+
 [dependencies]
 clap = { version = "4.5.11", features = ["derive", "env"] }
 derive-getters = { version = "0.5.0", features = ["auto_copy_getters"] }
 derive-new = "0.7.0"
 derive_more = { version = "2.1.1", features = ["full"] }
 errgonomic = { git = "https://github.com/DenisGorbachev/errgonomic" }
+fjall = "3.0.1"
+hex = "0.4.3"
 itertools = "0.14.0"
 standard-traits = { git = "https://github.com/DenisGorbachev/standard-traits" }
 strum = { version = "0.27.2", features = ["derive"] }
@@ -2002,6 +2008,10 @@ stub-macro = { version = "0.2.1" }
 subtype = { git = "https://github.com/DenisGorbachev/subtype" }
 thiserror = "2.0.17"
 tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
+
+[dev-dependencies]
+tempdir = "0.3.7"
+xshell = "0.3.0-pre.2"
 
 [package.metadata.cargo-machete]
 ignored = [
@@ -2043,6 +2053,8 @@ fn verify_cli() {
 
 ```rust
 mod command;
-
 pub use command::*;
+
+mod types;
+pub use types::*;
 ```
