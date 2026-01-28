@@ -312,7 +312,7 @@ Notes:
 
 * This CLI targets `fjall::Database` (non-transactional).
 
-### CommandSubcommand
+### Subcommand
 
 A child-command enum that selects one database operation exposed by this CLI.
 
@@ -323,7 +323,7 @@ Constructors:
 * Clear.
 * Contains.
 * Get.
-* Set.
+* Insert.
 
 Notes:
 
@@ -360,7 +360,7 @@ Examples:
 * List all entries in one keyspace.
   * `fjall --db ./db list my_items`.
 * List values separated by \0.
-  * `fjall --db ./db list my_items --key-value-separator "\0"`.
+  * `fjall --db ./db list my_items --kind value --item-separator "\0"`.
 
 Requirements:
 
@@ -368,10 +368,10 @@ Requirements:
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 * Must iterate using `Keyspace::iter()`.
 * Must accept `--key-value-separator <Separator>` (default: ": " (a colon followed by a space)).
-* Must accept `--pair-separator <Separator>` (default: "\n" (a newline)).
+* Must accept `--item-separator <Separator>` (default: "\n" (a newline)).
 * Must accept `--kind <OutputKind>`
 * Must call `kind.write(&mut stdout, key, value, key_value_separator)` for each `(key, value)` pair encountered
-* Must write an `pair_separator` after each `(key, value)` pair, including the last one (and document that fact)
+* Must write an `item_separator` after each item, including the last one (and document that fact)
 * Must stream output to stdout without building an unbounded in-memory list.
 
 ### ClearCommand
@@ -456,22 +456,18 @@ Notes:
 
 * Appending a newline is a convenience feature and is not a lossless operation.
 
-### SetCommand
+### InsertCommand
 
 A command that writes a key-value pair into a keyspace.
 
-Synonyms:
-
-* `set`.
-
 Examples:
 
-* Set a UTF-8 key and UTF-8 value.
-  * `fjall --db ./db set my_items my_key my_value`.
-* Set a hex key and value.
-  * `fjall --db ./db set my_items deadbeef cafe --key-encoding hex --value-encoding hex`.
-* Set a value from a file.
-  * `fjall --db ./db set my_items my_key ./value.bin --value-encoding path`.
+* Insert a UTF-8 key and UTF-8 value.
+  * `fjall --db ./db insert my_items my_key my_value`.
+* Insert a hex key and value.
+  * `fjall --db ./db insert my_items deadbeef cafe --key-encoding hex --value-encoding hex`.
+* Insert a value from a file.
+  * `fjall --db ./db insert my_items my_key ./value.bin --value-encoding path`.
 
 Requirements:
 
@@ -489,7 +485,11 @@ Requirements:
 Preferences:
 
 * Should default `--key-encoding` to `string`.
+
 * Should default `--value-encoding` to `string`.
+
+* Notes:
+  * "InsertCommand" name was chosen to align with "insert" method name in `fjall`
 
 ### ByteEncoding
 
@@ -510,11 +510,11 @@ Requirements:
 
 * `path` must accept an existing filesystem path and read bytes without modification.
 
-* Must process the CLI argument:
-  * `empty`: as empty `Vec<u8>` (needed to represent empty values) (the CLI argument must be exactly equal to "-" in this case).
-  * `string`: as `String`.
-  * `hex`: as hex-decoded bytes (two hex digits per byte) (case-insensitive).
-  * `path`: as a file path and read the entire file as bytes.
+* Must map the CLI argument:
+  * `empty`: from `String` to an empty `Vec<u8>` (needed to represent empty values) (the CLI argument must be exactly equal to "-" in this case).
+  * `string`: from `String` to `Vec<u8>` (without changes).
+  * `hex`: from `String` as hex-decoded bytes (two hex digits per byte) (case-insensitive) to `Vec<u8>`.
+  * `path`: from `String` as file path to `Vec<u8>` as the entire file contents as bytes.
     * Must treat a `path` pointing to a directory as an error.
 
 ### Separator
