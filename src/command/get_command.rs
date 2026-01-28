@@ -42,11 +42,7 @@ impl GetCommand {
         Ok(ExitCode::SUCCESS)
     }
 
-    pub fn decode_key_bytes((key, encoding): (&str, ByteEncoding)) -> Result<Vec<u8>, GetCommandDecodeKeyBytesError> {
-        use GetCommandDecodeKeyBytesError::*;
-        let bytes = handle!(encoding.decode(key), DecodeFailed);
-        Ok(bytes)
-    }
+    impl_decode_bytes_method!(decode_key_bytes, GetCommandDecodeKeyBytesError);
 }
 
 #[derive(Error, Debug)]

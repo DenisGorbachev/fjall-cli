@@ -39,17 +39,8 @@ impl InsertCommand {
         Ok(ExitCode::SUCCESS)
     }
 
-    pub fn decode_key_bytes((key, encoding): (&str, ByteEncoding)) -> Result<Vec<u8>, InsertCommandDecodeKeyBytesError> {
-        use InsertCommandDecodeKeyBytesError::*;
-        let bytes = handle!(encoding.decode(key), DecodeFailed);
-        Ok(bytes)
-    }
-
-    pub fn decode_value_bytes((value, encoding): (&str, ByteEncoding)) -> Result<Vec<u8>, InsertCommandDecodeValueBytesError> {
-        use InsertCommandDecodeValueBytesError::*;
-        let bytes = handle!(encoding.decode(value), DecodeFailed);
-        Ok(bytes)
-    }
+    impl_decode_bytes_method!(decode_key_bytes, InsertCommandDecodeKeyBytesError);
+    impl_decode_bytes_method!(decode_value_bytes, InsertCommandDecodeValueBytesError);
 }
 
 #[derive(Error, Debug)]

@@ -32,11 +32,7 @@ impl ContainsCommand {
         Ok(exit_code)
     }
 
-    pub fn decode_key_bytes((key, encoding): (&str, ByteEncoding)) -> Result<Vec<u8>, ContainsCommandDecodeKeyBytesError> {
-        use ContainsCommandDecodeKeyBytesError::*;
-        let bytes = handle!(encoding.decode(key), DecodeFailed);
-        Ok(bytes)
-    }
+    impl_decode_bytes_method!(decode_key_bytes, ContainsCommandDecodeKeyBytesError);
 }
 
 #[derive(Error, Debug)]

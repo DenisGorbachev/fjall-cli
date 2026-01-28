@@ -9,18 +9,13 @@ use thiserror::Error;
 pub struct KeyspaceListCommand {}
 
 impl KeyspaceListCommand {
-    #[allow(clippy::question_mark)]
     pub async fn run(self, db: &Database) -> Result<ExitCode, KeyspaceListCommandRunError> {
         use KeyspaceListCommandRunError::*;
         let mut stdout = io::stdout().lock();
-        let result: Result<(), io::Error> = db.list_keyspace_names().into_iter().try_for_each(|name| {
-            if let Err(source) = stdout.write_all(name.as_bytes()) {
-                return Err(source);
-            }
-            if let Err(source) = stdout.write_all(b"\n") {
-                return Err(source);
-            }
-            Ok(())
+        let result = db.list_keyspace_names().into_iter().try_for_each(|name| {
+            stdout
+                .write_all(name.as_bytes())
+                .and_then(|()| stdout.write_all(b"\n"))
         });
         handle!(result, WriteFailed);
         Ok(ExitCode::SUCCESS)
