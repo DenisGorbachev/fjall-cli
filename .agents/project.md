@@ -79,18 +79,18 @@ Examples:
 - List all entries in one keyspace.
   - `fjall --db ./db list my_items`.
 - List values separated by \0.
-  - `fjall --db ./db list my_items --value-separator "\0"`.
+  - `fjall --db ./db list my_items --key-value-separator "\0"`.
 
 Requirements:
 
 - Must require `keyspace` as a positional argument.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must iterate using `Keyspace::iter()`.
-- Must accept `--key-value-separator <Separator>` (default: ": " (a semicolon followed by a space)).
+- Must accept `--key-value-separator <Separator>` (default: ": " (a colon followed by a space)).
 - Must accept `--pair-separator <Separator>` (default: "\n" (a newline)).
 - Must accept `--kind <OutputKind>`
 - Must call `kind.write(&mut stdout, key, value, key_value_separator)` for each `(key, value)` pair encountered
-- Must write an `pair_separtor` after each `(key, value)` pair, including the last one (and document that fact)
+- Must write an `pair_separator` after each `(key, value)` pair, including the last one (and document that fact)
 - Must stream output to stdout without building an unbounded in-memory list.
 
 ## ClearCommand
