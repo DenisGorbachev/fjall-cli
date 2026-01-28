@@ -1,5 +1,6 @@
 use Subcommand::*;
 use errgonomic::map_err;
+use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
@@ -15,7 +16,7 @@ pub enum Subcommand {
 }
 
 impl Command {
-    pub async fn run(self) -> Result<(), CommandRunError> {
+    pub async fn run(self) -> Result<ExitCode, CommandRunError> {
         use CommandRunError::*;
         let Self {
             subcommand,
