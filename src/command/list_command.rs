@@ -19,6 +19,12 @@ pub struct ListCommand {
 
     #[arg(long, value_enum, default_value_t = OutputKind::KeyValue)]
     kind: OutputKind,
+
+    #[arg(long, default_value_t = 0, help = "Number of items to skip before writing output.")]
+    offset: usize,
+
+    #[arg(long, help = "Maximum number of items to write.")]
+    limit: Option<usize>,
 }
 
 impl ListCommand {
@@ -29,19 +35,29 @@ impl ListCommand {
             key_value_separator,
             item_separator,
             kind,
+            offset,
+            limit,
         } = self;
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
         let mut stdout = io::stdout().lock();
-        handle!(Self::write_items(&mut stdout, &keyspace_handle, &kind, &key_value_separator, &item_separator), WriteItemsFailed, keyspace);
+        handle!(Self::write_items(&mut stdout, &keyspace_handle, &kind, &key_value_separator, &item_separator, offset, limit), WriteItemsFailed, keyspace);
         Ok(ExitCode::SUCCESS)
     }
 
-    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, key_value_separator: &str, item_separator: &str) -> Result<(), ListCommandWriteItemsError> {
+    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, key_value_separator: &str, item_separator: &str, offset: usize, limit: Option<usize>) -> Result<(), ListCommandWriteItemsError> {
         use ListCommandWriteItemsError::*;
-        let result = keyspace
-            .iter()
-            .try_for_each(|guard| Self::write_item(writer, kind, key_value_separator, item_separator, guard));
+        let result = match limit {
+            Some(limit) => keyspace
+                .iter()
+                .skip(offset)
+                .take(limit)
+                .try_for_each(|guard| Self::write_item(writer, kind, key_value_separator, item_separator, guard)),
+            None => keyspace
+                .iter()
+                .skip(offset)
+                .try_for_each(|guard| Self::write_item(writer, kind, key_value_separator, item_separator, guard)),
+        };
         map_err!(result, WriteItemFailed)
     }
 
