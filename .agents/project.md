@@ -89,6 +89,8 @@ Requirements:
 - Must accept `--key-value-separator <Separator>` (default: ": " (a colon followed by a space)).
 - Must accept `--item-separator <Separator>` (default: "\n" (a newline)).
 - Must accept `--kind <OutputKind>`
+- Must accept `--offset` and apply it to iter
+- Must accept `--limit` and apply it to iter
 - Must call `kind.write(&mut stdout, key, value, key_value_separator)` for each `(key, value)` pair encountered
 - Must write an `item_separator` after each item, including the last one (and document that fact)
 - Must stream output to stdout without building an unbounded in-memory list.
