@@ -1,5 +1,18 @@
 # Concepts for fjall-cli package
 
+## fjall-cli
+
+A package that implements a CLI for Fjall key-value database.
+
+Requirements:
+
+- Must produce a single binary with `fjall` name
+- Must contain an integration test in `tests/full.rs`
+  - Requirements:
+    - Must create a temp dir for the database using `tempdir` crate
+    - Must exercise every command
+- Must use `xshell` version = "0.3.0-pre.2" in tests
+
 ## Command
 
 A parent CLI command that opens a `fjall::Database` and delegates execution to a selected subcommand.
@@ -13,6 +26,10 @@ Requirements:
 - Must accept `--db <PATH>` as a required option (may be specified as `FJALL_DB` environment variable).
 - Must construct a `fjall::Database` via `Database::builder(path).open()`.
 - Must pass a reference to the opened `fjall::Database` to the selected subcommand.
+- Must exit with the following codes:
+  - Success: 0.
+  - Failure (any error): 1.
+  - Key does not exist: 127.
 
 Notes:
 
@@ -64,45 +81,30 @@ A command that streams key-value pairs from a single keyspace.
 Examples:
 
 - List all entries in one keyspace.
-  - `fjall-cli --db ./db list my_items`.
+  - `fjall --db ./db list my_items`.
 - List values separated by \0.
-  - `fjall-cli --db ./db list my_items --value-separator "\0"`.
+  - `fjall --db ./db list my_items --value-separator "\0"`.
 
 Requirements:
 
 - Must require `keyspace` as a positional argument.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must iterate using `Keyspace::iter()`.
-- Must accept `--value-separator <KeyValueSeparator>`.
+- Must accept `--key-value-separator <Separator>` (default: ": " (a semicolon followed by a space)).
+- Must accept `--pair-separator <Separator>` (default: "\n" (a newline)).
 - Must accept `--kind <OutputKind>`
-- For each `(key, value)` pair encountered:
-  - Must write `key` bytes to stdout.
-  - Must write `value-separator` bytes to stdout.
-  - Must write `value` bytes to stdout.
-  - Must write a single `` byte to stdout.
+- Must call `kind.write(&mut stdout, key, value, key_value_separator)` for each `(key, value)` pair encountered
+- Must write an `pair_separtor` after each `(key, value)` pair, including the last one (and document that fact)
 - Must stream output to stdout without building an unbounded in-memory list.
-
-Preferences:
-
-- Should default `--value-separator` to a single `` byte.
-
-Notes:
-
-- This output format is not a fully self-describing framing format when keys and values are arbitrary bytes.
-- The command is intended for simple debugging and piping, not for lossless structured export.
 
 ## ClearCommand
 
 A command that clears a keyspace.
 
-Synonyms:
-
-- `clear`.
-
 Examples:
 
 - Clear one keyspace.
-  - `fjall-cli --db ./db clear my_items`.
+  - `fjall --db ./db clear my_items`.
 
 Requirements:
 
@@ -110,10 +112,6 @@ Requirements:
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::clear()`.
 - Must treat a non-existent keyspace name as an error.
-
-Notes:
-
-- Clearing a keyspace is destructive.
 
 ## ContainsCommand
 
@@ -126,11 +124,11 @@ Synonyms:
 Examples:
 
 - Check existence with UTF-8 key.
-  - `fjall-cli --db ./db contains my_items my_key`.
+  - `fjall --db ./db contains my_items my_key`.
 - Check existence with hex key.
-  - `fjall-cli --db ./db contains my_items deadbeef --key-encoding hex`.
+  - `fjall --db ./db contains my_items deadbeef --key-encoding hex`.
 - Check existence with key bytes from a file.
-  - `fjall-cli --db ./db contains my_items ./key.bin --key-encoding path`.
+  - `fjall --db ./db contains my_items ./key.bin --key-encoding path`.
 
 Requirements:
 
@@ -140,12 +138,6 @@ Requirements:
 - Must decode the `key` argument into a byte vector according to `--key-encoding`.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::contains_key(key_bytes)`.
-- If the key exists:
-  - Must exit with code `0`.
-- If the key does not exist:
-  - Must exit with code `1`.
-- On errors:
-  - Must exit with a code other than `0` and `1`.
 
 Preferences:
 
@@ -156,16 +148,12 @@ Preferences:
 
 A command that retrieves a value for a key from a keyspace.
 
-Synonyms:
-
-- `get`.
-
 Examples:
 
 - Get a value.
-  - `fjall-cli --db ./db get my_items my_key`.
+  - `fjall --db ./db get my_items my_key`.
 - Get a value without the trailing newline.
-  - `fjall-cli --db ./db get my_items my_key -n`.
+  - `fjall --db ./db get my_items my_key -n`.
 
 Requirements:
 
@@ -176,12 +164,8 @@ Requirements:
 - Must decode the `key` argument into a byte vector according to `--key-encoding`.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::get(key_bytes)`.
-- If a value is present:
-  - Must write the value bytes to stdout.
-  - Unless `--no-newline` is present, must then write a single `` byte to stdout.
-  - Must exit with code `0`.
-- If a value is not present:
-  - Must exit with code `1`.
+- Must write the value bytes to stdout (if value is present).
+- Must write a single `\n` byte to stdout unless `--no-newline` is true
 
 Preferences:
 
@@ -202,11 +186,11 @@ Synonyms:
 Examples:
 
 - Set a UTF-8 key and UTF-8 value.
-  - `fjall-cli --db ./db set my_items my_key my_value`.
+  - `fjall --db ./db set my_items my_key my_value`.
 - Set a hex key and value.
-  - `fjall-cli --db ./db set my_items deadbeef cafe --key-encoding hex --value-encoding hex`.
+  - `fjall --db ./db set my_items deadbeef cafe --key-encoding hex --value-encoding hex`.
 - Set a value from a file.
-  - `fjall-cli --db ./db set my_items my_key ./value.bin --value-encoding path`.
+  - `fjall --db ./db set my_items my_key ./value.bin --value-encoding path`.
 
 Requirements:
 
@@ -233,27 +217,7 @@ An encoding that maps a single CLI argument into an arbitrary byte vector.
 Constructors:
 
 - empty.
-- string.
-- hex.
-- path.
-
-Examples:
-
-- `empty`: interpret the CLI argument as empty `Vec<u8>` (needed to represent empty values) (the CLI argument must be exactly equal to "-" in this case).
-- `string`: interpret the CLI argument as UTF-8 bytes.
-- `hex`: interpret the CLI argument as hex-decoded bytes (two hex digits per byte) (case-insensitive).
-- `path`: interpret the CLI argument as a file path and read the entire file as bytes.
-
-Requirements:
-
-- Should treat an empty `hex` string as an empty byte vector.
-- Should treat a `path` pointing to a directory as an error.
-
-An encoding that maps a single CLI argument into an arbitrary byte vector.
-
-Constructors:
-
-- string.
+- string (default).
 - hex.
 - path.
 
@@ -262,11 +226,17 @@ Requirements:
 - `string` must accept any valid UTF-8 string and produce the corresponding bytes.
 - `hex` must accept an even-length sequence of hexadecimal characters (case-insensitive).
 - `path` must accept an existing filesystem path and read bytes without modification.
-- Must treat a `path` pointing to a directory as an error.
 
-## KeyValueSeparator
+- Must process the CLI argument:
+  - `empty`: as empty `Vec<u8>` (needed to represent empty values) (the CLI argument must be exactly equal to "-" in this case).
+  - `string`: as `String`.
+  - `hex`: as hex-decoded bytes (two hex digits per byte) (case-insensitive).
+  - `path`: as a file path and read the entire file as bytes.
+    - Must treat a `path` pointing to a directory as an error.
 
-A byte sequence produced from a CLI argument that is inserted between a key and value during `list` output.
+## Separator
+
+A byte sequence produced from a CLI argument that is inserted between output fragments.
 
 Requirements:
 
@@ -289,3 +259,8 @@ Constructors:
 - Key
 - Value
 - KeyValue (default)
+
+Methods:
+
+- `write`
+  - Must write either a key, a value, a key-value pair (depending on the value of `self`) 
