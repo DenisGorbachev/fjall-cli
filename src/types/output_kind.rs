@@ -1,4 +1,3 @@
-use crate::Separator;
 use errgonomic::handle;
 use std::io;
 use std::io::Write;
@@ -14,7 +13,7 @@ pub enum OutputKind {
 }
 
 impl OutputKind {
-    pub fn write(&self, writer: &mut impl Write, key: &[u8], value: &[u8], key_value_separator: &Separator) -> Result<(), OutputKindWriteError> {
+    pub fn write(&self, writer: &mut impl Write, key: &[u8], value: &[u8], key_value_separator: &str) -> Result<(), OutputKindWriteError> {
         use OutputKind::*;
         use OutputKindWriteError::*;
         match self {

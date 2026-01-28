@@ -7,15 +7,16 @@ use xshell::{Shell, cmd};
 #[test]
 fn full_cli_flow() -> Result<(), FullCliFlowError> {
     use FullCliFlowError::*;
-    let sh = handle!(Shell::new(), ShellNewFailed);
     let bin = env!("CARGO_BIN_EXE_fjall");
     let temp_dir = handle!(TempDir::new("fjall_cli"), TempDirNewFailed);
     let db_path = temp_dir.path();
+    let sh = handle!(Shell::new(), ShellNewFailed);
+    let sh = sh.with_var("FJALL_DB", db_path);
 
-    handle!(cmd!(sh, "{bin} --db {db_path} insert items key value").run(), InsertRunFailed);
+    handle!(cmd!(sh, "{bin} insert items key value").run(), InsertRunFailed);
 
     let output = handle!(
-        cmd!(sh, "{bin} --db {db_path} contains items key")
+        cmd!(sh, "{bin} contains items key")
             .ignore_status()
             .output(),
         ContainsExistingOutputFailed
@@ -25,7 +26,7 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     assert_eq!(status, 0);
 
     let output = handle!(
-        cmd!(sh, "{bin} --db {db_path} contains items missing")
+        cmd!(sh, "{bin} contains items missing")
             .ignore_status()
             .output(),
         ContainsMissingOutputFailed
@@ -34,21 +35,21 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let status = handle_opt!(output.status.code(), ContainsMissingStatusMissing);
     assert_eq!(status, 127);
 
-    let output = handle!(cmd!(sh, "{bin} --db {db_path} get items key").output(), GetOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} get items key").output(), GetOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), GetUtf8Failed);
     assert_eq!(stdout, "value\n");
 
-    let output = handle!(cmd!(sh, "{bin} --db {db_path} list items").output(), ListOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} list items").output(), ListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), ListUtf8Failed);
     assert_eq!(stdout, "key: value\n");
 
-    let output = handle!(cmd!(sh, "{bin} --db {db_path} keyspace list").output(), KeyspaceListOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} keyspace list").output(), KeyspaceListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListUtf8Failed);
     assert_eq!(stdout, "items\n");
 
-    handle!(cmd!(sh, "{bin} --db {db_path} clear items").run(), ClearRunFailed);
+    handle!(cmd!(sh, "{bin} clear items").run(), ClearRunFailed);
 
-    let output = handle!(cmd!(sh, "{bin} --db {db_path} list items").output(), ListAfterClearOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} list items").output(), ListAfterClearOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), ListAfterClearUtf8Failed);
     assert_eq!(stdout, "");
 

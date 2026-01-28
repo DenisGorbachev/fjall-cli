@@ -239,7 +239,7 @@ Requirements:
 
 ## Separator
 
-An `OsString` that is inserted between output fragments.
+A `String` that is inserted between output fragments.
 
 ## OutputKind
 

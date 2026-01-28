@@ -1,4 +1,4 @@
-use crate::{OutputKind, OutputKindWriteError, Separator};
+use crate::{OutputKind, OutputKindWriteError};
 use errgonomic::{handle, handle_bool, map_err};
 use fjall::{Database, Guard, Keyspace, KeyspaceCreateOptions};
 use std::io;
@@ -12,10 +12,10 @@ pub struct ListCommand {
     keyspace: String,
 
     #[arg(long, default_value = ": ")]
-    key_value_separator: Separator,
+    key_value_separator: String,
 
-    #[arg(long, default_value = "\\n", help = "Separator between items (written after every item, including the last one).")]
-    item_separator: Separator,
+    #[arg(long, default_value = "\n", help = "Separator between items (written after every item, including the last one).")]
+    item_separator: String,
 
     #[arg(long, value_enum, default_value_t = OutputKind::KeyValue)]
     kind: OutputKind,
@@ -37,7 +37,7 @@ impl ListCommand {
         Ok(ExitCode::SUCCESS)
     }
 
-    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, key_value_separator: &Separator, item_separator: &Separator) -> Result<(), ListCommandWriteItemsError> {
+    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, key_value_separator: &str, item_separator: &str) -> Result<(), ListCommandWriteItemsError> {
         use ListCommandWriteItemsError::*;
         let result = keyspace
             .iter()
@@ -45,7 +45,7 @@ impl ListCommand {
         map_err!(result, WriteItemFailed)
     }
 
-    pub fn write_item(writer: &mut impl Write, kind: &OutputKind, key_value_separator: &Separator, item_separator: &Separator, guard: Guard) -> Result<(), ListCommandWriteItemError> {
+    pub fn write_item(writer: &mut impl Write, kind: &OutputKind, key_value_separator: &str, item_separator: &str, guard: Guard) -> Result<(), ListCommandWriteItemError> {
         use ListCommandWriteItemError::*;
         let (key, value) = handle!(guard.into_inner(), IntoInnerFailed);
         handle!(kind.write(writer, key.as_ref(), value.as_ref(), key_value_separator), WriteFailed);
