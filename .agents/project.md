@@ -92,6 +92,7 @@ Requirements:
 - Must call `kind.write(&mut stdout, key, value, key_value_separator)` for each `(key, value)` pair encountered
 - Must write an `item_separator` after each item, including the last one (and document that fact)
 - Must stream output to stdout without building an unbounded in-memory list.
+- Must return an error if the keyspace doesn't exist.
 
 ## ClearCommand
 
@@ -164,8 +165,10 @@ Requirements:
 - Must decode the `key` argument into a byte vector according to `--key-encoding`.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::get(key_bytes)`.
-- Must write the value bytes to stdout (if value is present).
-- Must write a single `\n` byte to stdout unless `--no-newline` is true
+- If the key-value pair is present:
+  - Then: Must write the value bytes to stdout.
+    - Must write a single `\n` byte to stdout unless `--no-newline` is true
+  - Else: Must return an `KeyNotFound`.
 
 Preferences:
 
@@ -206,8 +209,9 @@ Preferences:
 - Should default `--key-encoding` to `string`.
 - Should default `--value-encoding` to `string`.
 
-- Notes:
-  - "InsertCommand" name was chosen to align with "insert" method name in `fjall`
+Notes:
+
+- "InsertCommand" name was chosen to align with "insert" method name in `fjall`
 
 ## ByteEncoding
 
