@@ -26,10 +26,6 @@ Requirements:
 - Must accept `--db <PATH>` as a required option (may be specified as `FJALL_DB` environment variable).
 - Must construct a `fjall::Database` via `Database::builder(path).open()`.
 - Must pass a reference to the opened `fjall::Database` to the selected subcommand.
-- Must exit with the following codes:
-  - Success: 0.
-  - Failure (any error): 1.
-  - Key does not exist: 127.
 
 Notes:
 
@@ -138,6 +134,10 @@ Requirements:
 - Must decode the `key` argument into a byte vector according to `--key-encoding`.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::contains_key(key_bytes)`.
+- Must exit with the following codes (document this):
+  - Key exists: 0.
+  - Failure (any error): 1.
+  - Key does not exist: 127.
 
 Preferences:
 

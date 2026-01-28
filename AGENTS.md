@@ -307,10 +307,6 @@ Requirements:
 * Must accept `--db <PATH>` as a required option (may be specified as `FJALL_DB` environment variable).
 * Must construct a `fjall::Database` via `Database::builder(path).open()`.
 * Must pass a reference to the opened `fjall::Database` to the selected subcommand.
-* Must exit with the following codes:
-  * Success: 0.
-  * Failure (any error): 1.
-  * Key does not exist: 127.
 
 Notes:
 
@@ -419,6 +415,10 @@ Requirements:
 * Must decode the `key` argument into a byte vector according to `--key-encoding`.
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 * Must call `Keyspace::contains_key(key_bytes)`.
+* Must exit with the following codes (document this):
+  * Key exists: 0.
+  * Failure (any error): 1.
+  * Key does not exist: 127.
 
 Preferences:
 
@@ -603,14 +603,11 @@ use futures::StreamExt;
 use std::pin::pin;
 
 /// Converts a [`Result`] into an [`ExitCode`], printing a detailed error trace on failure.
-pub fn exit_result<E: Error>(result: Result<(), E>) -> ExitCode {
-    match result {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(err) => {
-            eprintln_error(&err);
-            ExitCode::FAILURE
-        }
-    }
+pub fn exit_result<E: Error>(result: Result<ExitCode, E>) -> ExitCode {
+    result.unwrap_or_else(|err| {
+        eprintln_error(&err);
+        ExitCode::FAILURE
+    })
 }
 
 /// Converts an [`impl IntoIterator<Item = Result<(), E>>`](IntoIterator) into an [`ExitCode`], printing a detailed error trace on the first failure.
@@ -1216,7 +1213,7 @@ cfg_if::cfg_if! {
 //! # #[derive(Error, Debug)]
 //! # enum Err {}
 //! #
-//! # fn run() -> Result<(), Err> { Ok(()) }
+//! # fn run() -> Result<ExitCode, Err> { Ok(ExitCode::SUCCESS) }
 //! #
 //! pub fn main() -> ExitCode {
 //!     exit_result(run())
@@ -1866,6 +1863,7 @@ fn verify_cli() {
 Example:
 
 ```rust
+use std::process::ExitCode;
 use Subcommand::*;
 use errgonomic::map_err;
 use thiserror::Error;
@@ -1883,7 +1881,7 @@ pub enum Subcommand {
 }
 
 impl Command {
-    pub async fn run(self) -> Result<(), CommandRunError> {
+    pub async fn run(self) -> Result<ExitCode, CommandRunError> {
         use CommandRunError::*;
         let Self {
             subcommand,
@@ -1916,7 +1914,7 @@ A struct that contains fields for CLI arguments.
 * Must be attached to a parent module: if it's a top-level command: `src/lib.rs`, else: `src/command.rs`
 * May contain a `subcommand` field annotated with `#[command(subcommand)]`
 * Must have a `pub async fn run`
-  * Must return a `Result`
+  * Must return a `Result` with `ExitCode`
   * If it contains a `subcommand` field: must match on `subcommand` and call `run` of each command
 
 Command example:
