@@ -23,12 +23,8 @@ impl KeyspaceCommand {
             subcommand,
         } = self;
         match subcommand {
-            List(command) => map_err!(Self::run_keyspace_list_command(command, db).await, RunKeyspaceListCommandFailed),
+            List(command) => map_err!(command.run(db).await, RunKeyspaceListCommandFailed),
         }
-    }
-
-    pub async fn run_keyspace_list_command(command: KeyspaceListCommand, db: &Database) -> Result<ExitCode, KeyspaceListCommandRunError> {
-        command.run(db).await
     }
 }
 
@@ -39,4 +35,5 @@ pub enum KeyspaceCommandRunError {
 }
 
 mod keyspace_list_command;
+
 pub use keyspace_list_command::*;
