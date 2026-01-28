@@ -1,12 +1,12 @@
 [package]
-name = "rust-pre-public-cli-template"
+name = "fjall-cli"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85.0"
-description = "A template for creating Rust CLI apps with Clap."
+description = "A CLI for Fjall database"
 license = "Apache-2.0 OR MIT"
-homepage = "https://github.com/DenisGorbachev/rust-cli-app-template"
-repository = "https://github.com/DenisGorbachev/rust-cli-app-template"
+homepage = "https://github.com/DenisGorbachev/fjall-cli"
+repository = "https://github.com/DenisGorbachev/fjall-cli"
 readme = "README.md"
 keywords = []
 categories = []
@@ -28,7 +28,7 @@ exclude = [
 ]
 
 [package.metadata.details]
-title = "Rust CLI app template"
+title = "A CLI for Fjall database"
 tagline = ""
 summary = ""
 announcement = ""
@@ -60,3 +60,8 @@ ignored = [
     "stub-macro",
     "subtype",
 ]
+
+
+
+
+
