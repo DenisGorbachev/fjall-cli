@@ -239,19 +239,7 @@ Requirements:
 
 ## Separator
 
-A byte sequence produced from a CLI argument that is inserted between output fragments.
-
-Requirements:
-
-- Must be representable from a single CLI argument.
-- Must support `\n` to produce a single newline byte (0x0A).
-- Must support `\r` to produce a single carriage-return byte (0x0D).
-- Must support `\t` to produce a single tab byte (0x09).
-- Must support `\xNN` (two hex digits) to produce one byte.
-
-Preferences:
-
-- Should support `\0` to produce a single NUL byte (0x00).
+An `OsString` that is inserted between output fragments.
 
 ## OutputKind
 

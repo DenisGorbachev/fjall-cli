@@ -1,31 +1,18 @@
 use errgonomic::{handle, handle_bool};
-use std::fmt::{Display, Formatter};
 use std::fs;
 use std::io;
 use std::path::PathBuf;
 use thiserror::Error;
 
-#[derive(clap::ValueEnum, Copy, Clone, Debug, Default)]
+#[derive(clap::ValueEnum, Copy, Clone, Debug, Default, strum::Display)]
 #[clap(rename_all = "kebab")]
+#[strum(serialize_all = "kebab-case")]
 pub enum ByteEncoding {
     Empty,
     #[default]
     String,
     Hex,
     Path,
-}
-
-impl Display for ByteEncoding {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        use ByteEncoding::*;
-        let value = match self {
-            Empty => "empty",
-            String => "string",
-            Hex => "hex",
-            Path => "path",
-        };
-        write!(f, "{value}")
-    }
 }
 
 impl ByteEncoding {
