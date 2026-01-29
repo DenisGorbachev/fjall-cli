@@ -1,36 +1,35 @@
 use errgonomic::{handle, handle_bool};
-use fjall::{Database, KeyspaceCreateOptions, PersistMode};
+use fjall::{Database, KeyspaceCreateOptions};
 use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
-pub struct ClearCommand {
+pub struct DeleteCommand {
     #[arg(value_name = "KEYSPACE")]
     keyspace: String,
 }
 
-impl ClearCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, ClearCommandRunError> {
-        use ClearCommandRunError::*;
+impl DeleteCommand {
+    pub async fn run(self, db: &Database) -> Result<ExitCode, DeleteCommandRunError> {
+        use DeleteCommandRunError::*;
         let Self {
             keyspace,
         } = self;
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
-        handle!(keyspace_handle.clear(), ClearFailed, keyspace);
-        db.persist(PersistMode::SyncAll).unwrap();
+        handle!(db.delete_keyspace(keyspace_handle), DeleteKeyspaceFailed, keyspace);
         Ok(ExitCode::SUCCESS)
     }
 }
 
 #[derive(Error, Debug)]
-pub enum ClearCommandRunError {
+pub enum DeleteCommandRunError {
     #[error("keyspace '{keyspace}' not found")]
     KeyspaceNotFound { keyspace: String },
 
     #[error("failed to open keyspace '{keyspace}'")]
     KeyspaceFailed { source: fjall::Error, keyspace: String },
 
-    #[error("failed to clear keyspace '{keyspace}'")]
-    ClearFailed { source: fjall::Error, keyspace: String },
+    #[error("failed to delete keyspace '{keyspace}'")]
+    DeleteKeyspaceFailed { source: fjall::Error, keyspace: String },
 }

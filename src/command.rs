@@ -25,6 +25,7 @@ pub enum Subcommand {
     Contains(ContainsCommand),
     Len(LenCommand),
     Clear(ClearCommand),
+    Delete(DeleteCommand),
 }
 
 impl Command {
@@ -50,6 +51,7 @@ impl Subcommand {
             Contains(command) => map_err!(command.run(db).await, RunContainsCommandFailed),
             Len(command) => map_err!(command.run(db).await, RunLenCommandFailed),
             Clear(command) => map_err!(command.run(db).await, RunClearCommandFailed),
+            Delete(command) => map_err!(command.run(db).await, RunDeleteCommandFailed),
         }
     }
 }
@@ -85,6 +87,9 @@ pub enum SubcommandRunError {
 
     #[error("failed to run clear command")]
     RunClearCommandFailed { source: ClearCommandRunError },
+
+    #[error("failed to run delete command")]
+    RunDeleteCommandFailed { source: DeleteCommandRunError },
 }
 
 mod keyspace_command;
@@ -114,3 +119,7 @@ pub use len_command::*;
 mod clear_command;
 
 pub use clear_command::*;
+
+mod delete_command;
+
+pub use delete_command::*;
