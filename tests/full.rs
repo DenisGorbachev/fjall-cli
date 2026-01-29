@@ -15,6 +15,14 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
 
     handle!(cmd!(sh, "{bin} insert items key value").run(), InsertRunFailed);
 
+    let output = handle!(cmd!(sh, "{bin} len items").output(), LenOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), LenUtf8Failed);
+    assert_eq!(stdout, "1\n");
+
+    let output = handle!(cmd!(sh, "{bin} keyspace count").output(), KeyspaceCountOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), KeyspaceCountUtf8Failed);
+    assert_eq!(stdout, "1\n");
+
     let output = handle!(
         cmd!(sh, "{bin} contains items key")
             .ignore_status()
@@ -53,6 +61,10 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let stdout = handle!(String::from_utf8(output.stdout), ListAfterClearUtf8Failed);
     assert_eq!(stdout, "");
 
+    let output = handle!(cmd!(sh, "{bin} len items").output(), LenAfterClearOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), LenAfterClearUtf8Failed);
+    assert_eq!(stdout, "0\n");
+
     Ok(())
 }
 
@@ -66,6 +78,18 @@ pub enum FullCliFlowError {
 
     #[error("failed to run insert command")]
     InsertRunFailed { source: xshell::Error },
+
+    #[error("failed to run len command")]
+    LenOutputFailed { source: xshell::Error },
+
+    #[error("failed to decode len output as utf-8")]
+    LenUtf8Failed { source: FromUtf8Error },
+
+    #[error("failed to run keyspace count command")]
+    KeyspaceCountOutputFailed { source: xshell::Error },
+
+    #[error("failed to decode keyspace count output as utf-8")]
+    KeyspaceCountUtf8Failed { source: FromUtf8Error },
 
     #[error("failed to run contains command for existing key")]
     ContainsExistingOutputFailed { source: xshell::Error },
@@ -111,4 +135,10 @@ pub enum FullCliFlowError {
 
     #[error("failed to decode list output after clear as utf-8")]
     ListAfterClearUtf8Failed { source: FromUtf8Error },
+
+    #[error("failed to run len command after clear")]
+    LenAfterClearOutputFailed { source: xshell::Error },
+
+    #[error("failed to decode len output after clear as utf-8")]
+    LenAfterClearUtf8Failed { source: FromUtf8Error },
 }

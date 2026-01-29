@@ -20,10 +20,11 @@ pub struct Command {
 pub enum Subcommand {
     Keyspace(KeyspaceCommand),
     List(ListCommand),
-    Clear(ClearCommand),
-    Contains(ContainsCommand),
     Get(GetCommand),
     Insert(InsertCommand),
+    Contains(ContainsCommand),
+    Len(LenCommand),
+    Clear(ClearCommand),
 }
 
 impl Command {
@@ -44,10 +45,11 @@ impl Subcommand {
         match self {
             Keyspace(command) => map_err!(command.run(db).await, RunKeyspaceCommandFailed),
             List(command) => map_err!(command.run(db).await, RunListCommandFailed),
-            Clear(command) => map_err!(command.run(db).await, RunClearCommandFailed),
-            Contains(command) => map_err!(command.run(db).await, RunContainsCommandFailed),
             Get(command) => map_err!(command.run(db).await, RunGetCommandFailed),
             Insert(command) => map_err!(command.run(db).await, RunInsertCommandFailed),
+            Contains(command) => map_err!(command.run(db).await, RunContainsCommandFailed),
+            Len(command) => map_err!(command.run(db).await, RunLenCommandFailed),
+            Clear(command) => map_err!(command.run(db).await, RunClearCommandFailed),
         }
     }
 }
@@ -69,17 +71,20 @@ pub enum SubcommandRunError {
     #[error("failed to run list command")]
     RunListCommandFailed { source: ListCommandRunError },
 
-    #[error("failed to run clear command")]
-    RunClearCommandFailed { source: ClearCommandRunError },
-
-    #[error("failed to run contains command")]
-    RunContainsCommandFailed { source: ContainsCommandRunError },
-
     #[error("failed to run get command")]
     RunGetCommandFailed { source: GetCommandRunError },
 
     #[error("failed to run insert command")]
     RunInsertCommandFailed { source: InsertCommandRunError },
+
+    #[error("failed to run contains command")]
+    RunContainsCommandFailed { source: ContainsCommandRunError },
+
+    #[error("failed to run len command")]
+    RunLenCommandFailed { source: LenCommandRunError },
+
+    #[error("failed to run clear command")]
+    RunClearCommandFailed { source: ClearCommandRunError },
 }
 
 mod keyspace_command;
@@ -90,14 +95,6 @@ mod list_command;
 
 pub use list_command::*;
 
-mod clear_command;
-
-pub use clear_command::*;
-
-mod contains_command;
-
-pub use contains_command::*;
-
 mod get_command;
 
 pub use get_command::*;
@@ -105,3 +102,15 @@ pub use get_command::*;
 mod insert_command;
 
 pub use insert_command::*;
+
+mod contains_command;
+
+pub use contains_command::*;
+
+mod len_command;
+
+pub use len_command::*;
+
+mod clear_command;
+
+pub use clear_command::*;
