@@ -39,26 +39,15 @@ Constructors:
 
 - Keyspace.
 - List.
-- Clear.
-- Contains.
 - Get.
 - Insert.
-
-Notes:
-
-- The `Keyspace` constructor corresponds to a nested command group that includes `keyspace list`.
+- Contains.
+- Len.
+- Clear.
 
 ## KeyspaceCommand
 
-A nested command group for keyspace-scoped meta-operations.
-
-Constructors:
-
-- List.
-
-Requirements:
-
-- Must contain a `KeyspaceListCommand`.
+A command that contains Keyspace-prefixed subcommands.
 
 ## KeyspaceListCommand
 
@@ -69,6 +58,14 @@ Requirements:
 - Must call `Database::list_keyspace_names()`.
 - Must write keyspace names to stdout as UTF-8 bytes.
 - Must write exactly one `\n` byte after each keyspace name.
+
+## KeyspaceCountCommand
+
+A command that outputs the count of keyspaces in a `fjall::Database`.
+
+Requirements:
+
+- Must call `Database::keyspace_count()`.
 
 ## ListCommand
 
@@ -95,6 +92,14 @@ Requirements:
 - Must write an `item_separator` after each item, including the last one (and document that fact)
 - Must stream output to stdout without building an unbounded in-memory list.
 - Must return an error if the keyspace doesn't exist.
+
+## LenCommand
+
+A command that outputs the keyspace len.
+
+Requirements:
+
+- Must use `len`, not `approximate_len`
 
 ## ClearCommand
 
