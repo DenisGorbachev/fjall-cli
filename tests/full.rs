@@ -55,7 +55,7 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListUtf8Failed);
     assert_eq!(stdout, "items\n");
 
-    // TODO: the "clear" tests are commented out until `Keyspace::clear` is fixed
+    // TODO: the "clear" tests are commented out until `Keyspace::clear` is fixed (see tests/clear_repro.rs)
     // handle!(cmd!(sh, "{bin} clear items").run(), ClearRunFailed);
     //
     // let output = handle!(cmd!(sh, "{bin} list items").output(), ListAfterClearOutputFailed);
