@@ -397,6 +397,18 @@ Requirements:
 * Must call `Keyspace::clear()`.
 * Must treat a non-existent keyspace name as an error.
 
+### DeleteCommand
+
+A command that deletes a keyspace.
+
+Requirements:
+
+* Must call `Database::delete_keyspace()`.
+
+Notes:
+
+* `Database::delete_keyspace` is `#[doc(hidden)]`
+
 ### ContainsCommand
 
 A command that checks whether a key exists in a keyspace.
