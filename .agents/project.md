@@ -76,22 +76,29 @@ Examples:
 - List all entries in one keyspace.
   - `fjall --db ./db list my_items`.
 - List values separated by \0.
-  - `fjall --db ./db list my_items --kind value --item-separator "\0"`.
+  - `fjall --db ./db list my_items --kind value --value-suffix "\0"`.
 
 Requirements:
 
 - Must require `keyspace` as a positional argument.
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must iterate using `Keyspace::iter()`.
-- Must accept `--key-value-separator <Separator>` (default: ": " (a colon followed by a space)).
-- Must accept `--item-separator <Separator>` (default: "\n" (a newline)).
 - Must accept `--kind <OutputKind>`
+- Must accept `--item-prefix <PrefixKind>` (default: None)
+- Must accept `--item-suffix <Suffix>` (default: None).
+- Must accept `--key-prefix <PrefixKind>` (default: None).
+- Must accept `--key-suffix <Suffix>` (default: None).
+- Must accept `--value-prefix <PrefixKind>` (default: None).
+- Must accept `--value-suffix <Suffix>` (default: None).
 - Must accept `--offset` and apply it to iter
 - Must accept `--limit` and apply it to iter
-- Must call `kind.write(&mut stdout, key, value, key_value_separator)` for each `(key, value)` pair encountered
-- Must write an `item_separator` after each item, including the last one (and document that fact)
+- Must call `kind.write` with `&mut stdout` for each `(key, value)` pair encountered
 - Must stream output to stdout without building an unbounded in-memory list.
 - Must return an error if the keyspace doesn't exist.
+
+Notes:
+
+- The `--key-value-separator` is replaced by `--key-suffix`
 
 ## LenCommand
 
@@ -261,9 +268,9 @@ Requirements:
   - `path`: from `String` as file path to `Vec<u8>` as the entire file contents as bytes.
     - Must treat a `path` pointing to a directory as an error.
 
-## Separator
+## Suffix
 
-A `String` that is inserted between output fragments.
+A `String` that is inserted after output fragments.
 
 ## OutputKind
 
@@ -278,4 +285,30 @@ Constructors:
 Methods:
 
 - `write`
-  - Must write either a key, a value, a key-value pair (depending on the value of `self`) 
+  - Must write either a key, a value, a key-value pair (depending on the value of `self`)
+  - Must write the prefixes if they are `Some`:
+    - Must call `item_prefix.write` at the start of every write
+    - Must call `key_prefix.write` before a key
+    - Must call `value_prefix.write` before a value
+  - Must write the suffixes if they are `Some`
+
+## PrefixKind
+
+A kind of prefix for `ListCommand`.
+
+Constructors:
+
+- LenU32Le
+- LenU64Le
+- LenU32Be
+- LenU64Be
+
+Methods:
+
+- `write(self, slice: &Slice)`
+  - Must write the prefix according to variant in `self`
+
+Notes:
+
+- Use `#[clap(rename_all = "kebab")]`
+- `Le` and `Be` refers to little-endian and big-endian
