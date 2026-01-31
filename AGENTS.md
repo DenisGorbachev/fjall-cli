@@ -306,6 +306,7 @@ Requirements:
 * Must accept `--db <PATH>` as a required option (may be specified as `FJALL_DB` environment variable).
 * Must construct a `fjall::Database` via `Database::builder(path).open()`.
 * Must pass a reference to the opened `fjall::Database` to the selected subcommand.
+* Every child command that reads the keyspace must check if the keyspace exists with `db.keyspace_exists` (return an error if it doesn't exist) before opening the keyspace
 
 Notes:
 
