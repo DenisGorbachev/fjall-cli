@@ -590,6 +590,7 @@ Methods:
 
 Notes:
 
+* `slice.len()` returns `usize`, so we can only losslessly cast len to `u64` (not `u32`)
 * Use `#[clap(rename_all = "kebab")]`
 * `Le` and `Be` refers to little-endian and big-endian
 
