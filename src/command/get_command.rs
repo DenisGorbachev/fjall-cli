@@ -1,5 +1,5 @@
 use crate::{ByteEncoding, ByteEncodingDecodeError};
-use errgonomic::{handle, handle_opt};
+use errgonomic::{handle, handle_bool, handle_opt};
 use fjall::{Database, KeyspaceCreateOptions};
 use std::io;
 use std::io::Write;
@@ -31,6 +31,7 @@ impl GetCommand {
             no_newline,
         } = self;
         let key_bytes = handle!(key_encoding.decode(&key), DecodeKeyBytesFailed, key, key_encoding);
+        handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
         let value_opt = handle!(keyspace_handle.get(&key_bytes), GetFailed, keyspace, key);
         let value = handle_opt!(value_opt, KeyNotFound, keyspace, key);
@@ -47,6 +48,9 @@ impl GetCommand {
 pub enum GetCommandRunError {
     #[error("failed to decode key '{key}' with encoding '{key_encoding}'")]
     DecodeKeyBytesFailed { source: ByteEncodingDecodeError, key: String, key_encoding: ByteEncoding },
+
+    #[error("keyspace '{keyspace}' not found")]
+    KeyspaceNotFound { keyspace: String },
 
     #[error("failed to open keyspace '{keyspace}'")]
     KeyspaceFailed { source: fjall::Error, keyspace: String },
