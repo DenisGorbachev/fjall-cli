@@ -298,9 +298,7 @@ A kind of prefix for `ListCommand`.
 
 Constructors:
 
-- LenU32Le
 - LenU64Le
-- LenU32Be
 - LenU64Be
 
 Methods:

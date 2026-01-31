@@ -1,4 +1,4 @@
-use crate::{OutputAffixes, PrefixKindWriteError};
+use crate::OutputAffixes;
 use errgonomic::handle;
 use fjall::Slice;
 use std::io;
@@ -28,11 +28,11 @@ impl OutputKind {
         match self {
             Key => {
                 if let Some(prefix) = item_prefix {
-                    let bytes = handle!(prefix.write(key), WriteFailed);
+                    let bytes = prefix.write(key);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 if let Some(prefix) = key_prefix {
-                    let bytes = handle!(prefix.write(key), WriteFailed);
+                    let bytes = prefix.write(key);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 handle!(writer.write_all(key.as_ref()), WriteAllFailed);
@@ -45,11 +45,11 @@ impl OutputKind {
             }
             Value => {
                 if let Some(prefix) = item_prefix {
-                    let bytes = handle!(prefix.write(value), WriteFailed);
+                    let bytes = prefix.write(value);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 if let Some(prefix) = value_prefix {
-                    let bytes = handle!(prefix.write(value), WriteFailed);
+                    let bytes = prefix.write(value);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 handle!(writer.write_all(value.as_ref()), WriteAllFailed);
@@ -62,11 +62,11 @@ impl OutputKind {
             }
             KeyValue => {
                 if let Some(prefix) = item_prefix {
-                    let bytes = handle!(prefix.write(key), WriteFailed);
+                    let bytes = prefix.write(key);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 if let Some(prefix) = key_prefix {
-                    let bytes = handle!(prefix.write(key), WriteFailed);
+                    let bytes = prefix.write(key);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 handle!(writer.write_all(key.as_ref()), WriteAllFailed);
@@ -74,7 +74,7 @@ impl OutputKind {
                     handle!(writer.write_all(suffix.as_bytes()), WriteAllFailed);
                 }
                 if let Some(prefix) = value_prefix {
-                    let bytes = handle!(prefix.write(value), WriteFailed);
+                    let bytes = prefix.write(value);
                     handle!(writer.write_all(&bytes), WriteAllFailed);
                 }
                 handle!(writer.write_all(value.as_ref()), WriteAllFailed);
@@ -92,9 +92,6 @@ impl OutputKind {
 
 #[derive(Error, Debug)]
 pub enum OutputKindWriteError {
-    #[error("failed to build prefix")]
-    WriteFailed { source: PrefixKindWriteError },
-
     #[error("failed to write output")]
     WriteAllFailed { source: io::Error },
 }
