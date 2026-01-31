@@ -49,7 +49,7 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
 
     let output = handle!(cmd!(sh, "{bin} list items").output(), ListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), ListUtf8Failed);
-    assert_eq!(stdout, "key: value\n");
+    assert_eq!(stdout, "keyvalue");
 
     let output = handle!(cmd!(sh, "{bin} keyspace list").output(), KeyspaceListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListUtf8Failed);

@@ -1,4 +1,4 @@
-use crate::{OutputKind, OutputKindWriteError};
+use crate::{OutputAffixes, OutputKind, OutputKindWriteError, PrefixKind, Suffix};
 use errgonomic::{handle, handle_bool, map_err};
 use fjall::{Database, Guard, Keyspace, KeyspaceCreateOptions};
 use std::io;
@@ -11,14 +11,26 @@ pub struct ListCommand {
     #[arg(value_name = "KEYSPACE")]
     keyspace: String,
 
-    #[arg(long, default_value = ": ")]
-    key_value_separator: String,
-
-    #[arg(long, default_value = "\n", help = "Separator between items (written after every item, including the last one).")]
-    item_separator: String,
-
     #[arg(long, value_enum, default_value_t = OutputKind::KeyValue)]
     kind: OutputKind,
+
+    #[arg(long, value_enum)]
+    item_prefix: Option<PrefixKind>,
+
+    #[arg(long)]
+    item_suffix: Option<Suffix>,
+
+    #[arg(long, value_enum)]
+    key_prefix: Option<PrefixKind>,
+
+    #[arg(long)]
+    key_suffix: Option<Suffix>,
+
+    #[arg(long, value_enum)]
+    value_prefix: Option<PrefixKind>,
+
+    #[arg(long)]
+    value_suffix: Option<Suffix>,
 
     #[arg(long, default_value_t = 0, help = "Number of items to skip before writing output.")]
     offset: usize,
@@ -32,40 +44,51 @@ impl ListCommand {
         use ListCommandRunError::*;
         let Self {
             keyspace,
-            key_value_separator,
-            item_separator,
             kind,
+            item_prefix,
+            item_suffix,
+            key_prefix,
+            key_suffix,
+            value_prefix,
+            value_suffix,
             offset,
             limit,
         } = self;
+        let affixes = OutputAffixes {
+            item_prefix,
+            item_suffix,
+            key_prefix,
+            key_suffix,
+            value_prefix,
+            value_suffix,
+        };
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
         let mut stdout = io::stdout().lock();
-        handle!(Self::write_items(&mut stdout, &keyspace_handle, &kind, &key_value_separator, &item_separator, offset, limit), WriteItemsFailed, keyspace);
+        handle!(Self::write_items(&mut stdout, &keyspace_handle, &kind, &affixes, offset, limit,), WriteItemsFailed, keyspace);
         Ok(ExitCode::SUCCESS)
     }
 
-    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, key_value_separator: &str, item_separator: &str, offset: usize, limit: Option<usize>) -> Result<(), ListCommandWriteItemsError> {
+    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, affixes: &OutputAffixes, offset: usize, limit: Option<usize>) -> Result<(), ListCommandWriteItemsError> {
         use ListCommandWriteItemsError::*;
         let result = match limit {
             Some(limit) => keyspace
                 .iter()
                 .skip(offset)
                 .take(limit)
-                .try_for_each(|guard| Self::write_item(writer, kind, key_value_separator, item_separator, guard)),
+                .try_for_each(|guard| Self::write_item(writer, kind, affixes, guard)),
             None => keyspace
                 .iter()
                 .skip(offset)
-                .try_for_each(|guard| Self::write_item(writer, kind, key_value_separator, item_separator, guard)),
+                .try_for_each(|guard| Self::write_item(writer, kind, affixes, guard)),
         };
         map_err!(result, WriteItemFailed)
     }
 
-    pub fn write_item(writer: &mut impl Write, kind: &OutputKind, key_value_separator: &str, item_separator: &str, guard: Guard) -> Result<(), ListCommandWriteItemError> {
+    pub fn write_item(writer: &mut impl Write, kind: &OutputKind, affixes: &OutputAffixes, guard: Guard) -> Result<(), ListCommandWriteItemError> {
         use ListCommandWriteItemError::*;
         let (key, value) = handle!(guard.into_inner(), IntoInnerFailed);
-        handle!(kind.write(writer, key.as_ref(), value.as_ref(), key_value_separator), WriteFailed);
-        handle!(writer.write_all(item_separator.as_bytes()), WriteAllFailed);
+        handle!(kind.write(writer, &key, &value, affixes), WriteFailed);
         Ok(())
     }
 }
@@ -95,7 +118,4 @@ pub enum ListCommandWriteItemError {
 
     #[error("failed to write output")]
     WriteFailed { source: OutputKindWriteError },
-
-    #[error("failed to write item separator")]
-    WriteAllFailed { source: io::Error },
 }
