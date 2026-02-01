@@ -45,7 +45,7 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
 
     let output = handle!(cmd!(sh, "{bin} get items key").output(), GetOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), GetUtf8Failed);
-    assert_eq!(stdout, "value\n");
+    assert_eq!(stdout, "value");
 
     let output = handle!(cmd!(sh, "{bin} list items").output(), ListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), ListUtf8Failed);

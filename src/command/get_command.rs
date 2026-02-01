@@ -1,4 +1,4 @@
-use crate::{ByteEncoding, ByteEncodingDecodeError};
+use crate::{ByteEncoding, ByteEncodingDecodeError, PrefixKind, Suffix};
 use errgonomic::{handle, handle_bool, handle_opt};
 use fjall::{Database, KeyspaceCreateOptions};
 use std::io;
@@ -17,8 +17,11 @@ pub struct GetCommand {
     #[arg(long, value_enum, default_value_t = ByteEncoding::String)]
     key_encoding: ByteEncoding,
 
-    #[arg(short, long)]
-    no_newline: bool,
+    #[arg(long, value_enum)]
+    value_prefix: Option<PrefixKind>,
+
+    #[arg(long)]
+    value_suffix: Option<Suffix>,
 }
 
 impl GetCommand {
@@ -28,7 +31,8 @@ impl GetCommand {
             keyspace,
             key,
             key_encoding,
-            no_newline,
+            value_prefix,
+            value_suffix,
         } = self;
         let key_bytes = handle!(key_encoding.decode(&key), DecodeKeyBytesFailed, key, key_encoding);
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
@@ -36,9 +40,13 @@ impl GetCommand {
         let value_opt = handle!(keyspace_handle.get(&key_bytes), GetFailed, keyspace, key);
         let value = handle_opt!(value_opt, KeyNotFound, keyspace, key);
         let mut stdout = io::stdout().lock();
+        if let Some(prefix) = value_prefix {
+            let bytes = prefix.write(&value);
+            handle!(stdout.write_all(&bytes), WriteAllFailed);
+        }
         handle!(stdout.write_all(value.as_ref()), WriteAllFailed);
-        if !no_newline {
-            handle!(stdout.write_all(b"\n"), WriteAllFailed);
+        if let Some(suffix) = value_suffix {
+            handle!(stdout.write_all(suffix.as_bytes()), WriteAllFailed);
         }
         Ok(ExitCode::SUCCESS)
     }
