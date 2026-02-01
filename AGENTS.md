@@ -465,30 +465,26 @@ Examples:
 
 * Get a value.
   * `fjall --db ./db get my_items my_key`.
-* Get a value without the trailing newline.
-  * `fjall --db ./db get my_items my_key -n`.
+* Get a value with the trailing newline (note: this example is Bash/Zsh-specific).
+  * `fjall --db ./db get my_items my_key --value-suffix $'\n'`.
 
 Requirements:
 
 * Must parse `keyspace` as a required positional argument.
 * Must parse `key` as a required positional argument.
 * Must accept `--key-encoding <ByteEncoding>`.
-* Must accept `--no-newline` (or `-n`).
+* Must accept `--value-prefix <PrefixKind>` (default: None).
+* Must accept `--value-suffix <Suffix>` (default: None).
 * Must decode the `key` argument into a byte vector according to `--key-encoding`.
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 * Must call `Keyspace::get(key_bytes)`.
 * If the key-value pair is present:
-  * Then: Must write the value bytes to stdout.
-    * Must write a single `\n` byte to stdout unless `--no-newline` is true
+  * Then: Must write the value bytes to stdout (similar to `ListCommand`, supporting the `--value-prefix` and `--value-suffix`).
   * Else: Must return an `KeyNotFound`.
 
 Preferences:
 
 * Should default `--key-encoding` to `string`.
-
-Notes:
-
-* Appending a newline is a convenience feature and is not a lossless operation.
 
 ### InsertCommand
 
