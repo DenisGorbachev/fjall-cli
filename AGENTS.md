@@ -2130,7 +2130,7 @@ Proxy command example:
 ```toml
 [package]
 name = "fjall-cli"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.91.0"
 description = "CLI for Fjall database"
