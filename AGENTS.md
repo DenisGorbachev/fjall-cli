@@ -2072,7 +2072,7 @@ title = "CLI for Fjall database"
 tagline = ""
 summary = ""
 announcement = ""
-readme = { generate = false }
+readme = { generate = true }
 
 [[bin]]
 name = "fjall"
@@ -2137,8 +2137,6 @@ fn verify_cli() {
 ### src/lib.rs
 
 ````rust
-//! CLI for the [Fjall](https://crates.io/crates/fjall) key-value database.
-//!
 //! ## Command
 //!
 //! The command requires `--db <PATH>` or `FJALL_DB`.

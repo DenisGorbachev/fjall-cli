@@ -1,5 +1,3 @@
-//! CLI for the [Fjall](https://crates.io/crates/fjall) key-value database.
-//!
 //! ## Command
 //!
 //! The command requires `--db <PATH>` or `FJALL_DB`.

@@ -32,7 +32,7 @@ title = "CLI for Fjall database"
 tagline = ""
 summary = ""
 announcement = ""
-readme = { generate = false }
+readme = { generate = true }
 
 [[bin]]
 name = "fjall"
