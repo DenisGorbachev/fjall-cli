@@ -5,6 +5,7 @@
 # CLI for Fjall database
 
 [![Build](https://github.com/DenisGorbachev/fjall-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/DenisGorbachev/fjall-cli)
+[![Documentation](https://docs.rs/fjall-cli/badge.svg)](https://docs.rs/fjall-cli)
 
 <!-- crate documentation start -->
 ## Command
