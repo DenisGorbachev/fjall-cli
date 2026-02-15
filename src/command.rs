@@ -78,31 +78,3 @@ pub use list_keyspace_names_command::*;
 mod keyspace_count_command;
 
 pub use keyspace_count_command::*;
-
-mod iter_command;
-
-pub use iter_command::*;
-
-mod get_command;
-
-pub use get_command::*;
-
-mod insert_command;
-
-pub use insert_command::*;
-
-mod contains_command;
-
-pub use contains_command::*;
-
-mod len_command;
-
-pub use len_command::*;
-
-mod clear_command;
-
-pub use clear_command::*;
-
-mod delete_command;
-
-pub use delete_command::*;

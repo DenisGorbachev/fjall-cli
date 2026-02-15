@@ -50,7 +50,7 @@ Requirements:
 
 - Must support keyspace-scoped subcommands by accepting keyspace name first.
 - Must include the following keyspace-scoped operations:
-  - `list`
+  - `iter`
   - `get`
   - `insert`
   - `contains`
@@ -87,16 +87,16 @@ Examples:
 
 - `fjall --db ./db keyspace-count`
 
-## ListCommand
+## IterCommand
 
 A command that streams key-value pairs from a single keyspace.
 
 Examples:
 
 - List all entries in one keyspace.
-  - `fjall --db ./db keyspace my_items list`.
+  - `fjall --db ./db keyspace my_items iter`.
 - List values separated by \0.
-  - `fjall --db ./db keyspace my_items list --kind value --value-suffix "\0"`.
+  - `fjall --db ./db keyspace my_items iter --kind value --value-suffix "\0"`.
 
 Requirements:
 
@@ -228,7 +228,7 @@ Requirements:
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::get(key_bytes)`.
 - If the key-value pair is present:
-  - Then: Must write the value bytes to stdout (similar to `ListCommand`, supporting the `--value-prefix` and `--value-suffix`).
+  - Then: Must write the value bytes to stdout (similar to `IterCommand`, supporting the `--value-prefix` and `--value-suffix`).
   - Else: Must return an `KeyNotFound`.
 
 Preferences:
@@ -300,7 +300,7 @@ A `String` that is inserted after output fragments.
 
 ## OutputKind
 
-A kind of output for `ListCommand`.
+A kind of output for `IterCommand`.
 
 Constructors:
 
@@ -320,7 +320,7 @@ Methods:
 
 ## PrefixKind
 
-A kind of prefix for `ListCommand`.
+A kind of prefix for `IterCommand`.
 
 Constructors:
 
