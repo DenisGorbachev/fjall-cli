@@ -7,11 +7,9 @@ A package that implements a CLI for Fjall key-value database.
 Requirements:
 
 - Must produce a single binary with `fjall` name
-- Must contain an integration test in `tests/full.rs`
-  - Requirements:
-    - Must create a temp dir for the database using `tempdir` crate
-    - Must exercise every command
+- Must contain a [full integration test](#full-integration-test)
 - Must use `xshell` version = "0.3.0-pre.2" in tests
+- Must contain crate-level documentation in src/lib.rs
 
 ## Command
 
@@ -339,3 +337,16 @@ Notes:
 - `slice.len()` returns `usize`, so we can only losslessly cast len to `u64` (not `u32`)
 - Use `#[clap(rename_all = "kebab")]`
 - `Le` and `Be` refers to little-endian and big-endian
+
+## Crate-level documentation
+
+- Must have an "Example" section
+  - Must demonstrate the commands similarly to the [full integration test](#full-integration-test)
+
+## Full integration test
+
+Requirements:
+
+- Must be located in `tests/full.rs`
+- Must create a temp dir for the database using `tempdir` crate
+- Must exercise every command

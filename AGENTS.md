@@ -287,11 +287,9 @@ A package that implements a CLI for Fjall key-value database.
 Requirements:
 
 * Must produce a single binary with `fjall` name
-* Must contain an integration test in `tests/full.rs`
-  * Requirements:
-    * Must create a temp dir for the database using `tempdir` crate
-    * Must exercise every command
+* Must contain a [full integration test](#full-integration-test)
 * Must use `xshell` version = "0.3.0-pre.2" in tests
+* Must contain crate-level documentation in src/lib.rs
 
 ### Command
 
@@ -621,6 +619,19 @@ Notes:
 * `slice.len()` returns `usize`, so we can only losslessly cast len to `u64` (not `u32`)
 * Use `#[clap(rename_all = "kebab")]`
 * `Le` and `Be` refers to little-endian and big-endian
+
+### Crate-level documentation
+
+* Must have an "Example" section
+  * Must demonstrate the commands similarly to the [full integration test](#full-integration-test)
+
+### Full integration test
+
+Requirements:
+
+* Must be located in `tests/full.rs`
+* Must create a temp dir for the database using `tempdir` crate
+* Must exercise every command
 
 ## Error handling guidelines
 
@@ -2030,7 +2041,7 @@ name = "fjall-cli"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.91.0"
-description = "A CLI for Fjall database"
+description = "CLI for Fjall database"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/DenisGorbachev/fjall-cli"
 repository = "https://github.com/DenisGorbachev/fjall-cli"
@@ -2055,7 +2066,7 @@ exclude = [
 ]
 
 [package.metadata.details]
-title = "A CLI for Fjall database"
+title = "CLI for Fjall database"
 tagline = ""
 summary = ""
 announcement = ""
@@ -2124,9 +2135,17 @@ fn verify_cli() {
 ### src/lib.rs
 
 ```rust
+//! ## Example
+//!
+//! ## Known bugs
+//!
+//! * `clear` command doesn't really clear the keyspace due to a bug in fjall v3.0.1 ([issue](https://github.com/fjall-rs/fjall/issues/241)).
+
 mod command;
+
 pub use command::*;
 
 mod types;
+
 pub use types::*;
 ```
