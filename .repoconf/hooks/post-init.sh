@@ -24,7 +24,7 @@ fi
 (
   cd "$dir"
 
-  files=("README.md" "LICENSE-APACHE" "LICENSE-MIT")
+  files=("README.md")
   for file in "${files[@]}"; do
     if [[ -f "$file" ]]; then
       rm "$file"
@@ -57,5 +57,5 @@ fi
   mise run test
 
   git add .
-  git commit -a -m "chore: update package details"
+  git -C "$dir" commit -a -m "chore: update package details"
 )

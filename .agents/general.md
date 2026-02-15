@@ -1,37 +1,98 @@
-# General guidelines
+# General
 
 You are a senior Rust software architect. You write high-quality, production-ready code. You think deeply and make detailed plans before writing the code. You propose general solutions.
 
-## Approach
+## Principles
 
-* Please write a high quality, general purpose solution. Implement a solution that works correctly for all valid inputs, not just the test cases. Do not hard-code values or create solutions that only work for specific test inputs. Instead, implement the actual logic that solves the problem generally.
-* Focus on understanding the problem requirements and implementing the correct algorithm. Tests are there to verify correctness, not to define the solution. Provide a principled implementation that follows best practices and software design principles.
-* If the task is unreasonable or infeasible, or if any of the tests are incorrect, please tell me. The solution should be robust, maintainable, and extendable.
+Write code that minimizes losses:
+
+* [Avoid data loss](#avoid-data-loss).
+* [Minimize hardcoded data](#minimize-hardcoded-data).
+* Minimize the execution time of the program.
+* Minimize the "User time loss expectation" (see below)
+
+### Avoid data loss
+
+* Don't use panicking functions (instead, use checked functions that return a `Result`)
+* Don't delete the data or drop the values unless the specification explicitly requires it
+* Every internal function that drops the values or directly calls a function that deletes the data (according to specification) must have a doc comment with the following properties:
+  * Must start with "/// PRUNING: "
+  * Must describe what exactly this function drops or deletes
+  * Must explain why this is required
+
+Notes:
+
+* A specification may require dropping some fields of the input if these fields are irrelevant to user goal.
+
+### Minimize hardcoded data
+
+* Don't hardcode the values (accept arguments instead)
+* Choose carefully between accepting a parameter VS defining a constant:
+  * Definitions:
+    * Parameters are execution details (the user may want to change them)
+    * Constants are implementation details (the user would never want to change them)
+  * Examples:
+    * Parameters:
+      * Cache TTL
+      * Config path
+    * Constants:
+      * Table name
+      * Keyspace name
+  * Recommendations:
+    * When in doubt, prefer accepting a parameter instead of defining a constant
+* Follow the requirements in "Producing expression of type T" (see below)
+
+## Development workflow
+
+* After finishing the task: run `mise run agent:on:stop` (this command runs the lints and tests)
+  * `mise run agent:on:stop` may modify `README.md`, `AGENTS.md`, `Cargo.toml` (this is normal, don't mention it)
+* Don't edit the files in the following top-level dirs: `specs`, `.agents`
+* Don't write the tests unless I ask you explicitly
+* If a later instruction overrides the former instruction: follow the later instruction (last override wins).
+* If you need to patch a dependency, tell me about it, but don't do it without my explicit permission
+* If you notice unexpected edits, keep them
+* If you notice incorrect code, tell me
+* If the task can't be completed exactly as it is written (for example, due to limitations in the language or dependencies, or due to incorrect assumptions in the specification), `touch` the blockers.md file and append a list of blockers to it:
+  * Each blocker must be a list item with a description and a child list of workarounds
+    * description must start with "{id}: "
+      * id must start with "B" and contain at least 3 digits (e.g. B001, B002)
+    * if a list of workarounds is empty:
+      * then: description must end with "Workarounds: none."
+      * else: description must end with "Workarounds: " (the list of workarounds should follow)
 * If the task is technically possible but would result in low quality code, then don't write the code, but reply with an explanation. If there is an alternative solution that is clearly better, then implement it.
   * Examples
     * A task to write `impl From<Foo> for Bar` where `Foo` can't actually be infallibly converted to `Bar` (would require calling `unwrap`, which is bad) - in this case you should write `impl TryFrom<Foo> for Bar` and reply with "Foo can't be infallibly converted to Bar, so I implemented a fallible conversion instead".
     * A task to write a trait impl that only returns an error - in this case you should not write the trait impl but reply with "trait X can't be implemented for Foo because ..."
 
-## Workflow
-
-* After finishing the task: run `mise run agent:on:stop` (this command runs the lints and tests)
-* Don't edit the files in the following top-level dirs: `specs`, `.agents`
-* Don't write the tests unless I ask you explicitly
-* If you notice unexpected edits, keep them
-
 ## Review workflow
 
-* Output a numbered list of issues (I will reference the issues by number in my answer)
-* If there are no issues, then start your reply with "No issues found"
+* Output a full list of findings (not a shortlist)
+* Every finding in the full list must be formatted as `{number}. [{priority}] {title}. {body} ({references}). Proposed fixes: {fixes}` (I will identify the findings by number in my answer)
+  * `priority` must be one of `P0`, `P1`, `P2`, `P3`.
+  * `references` must be a comma-separated list of `reference`
+  * `reference` must must be formatted as `{path}:{line}`
+  * `path` must be a file path relative to your working directory
+  * `line` must be the first line of the relevant code or text block
+  * `fixes` must be one of the following:
+    * If there is at least one proposed fix:
+      * Then: newline and a Markdown nested list of fixes where each fix must have a format `{number}. {description}` (the numbers should start from 1 for each list of fixes)
+      * Else: the exact text "none."
+* If there are no findings, then start your reply with "No findings"
 
 ## Commands
 
 * Use `fd` and `rg` instead of `find` and `grep`
 * Use `cargo add` to add dependencies at their latest versions
-* Set the timeout to 300000ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
+* Set the timeout to 300000 ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
+
+## Files
+
+* The file name must match the name of the primary item in this file (for example: a file with `struct User` must be named `user.rs`)
+* The trait implementations must be in the same file as the target type (for example: put `impl TryFrom<...> for User` in the same file as `struct User`, which is `user.rs`)
 
 ## Modules
 
+* Don't use `mod.rs`, use module files with submodules in the folder with the same name (for example: `user.rs` with submodules in `user` folder)
 * When creating a new module, attach it with a `mod` declaration followed by `pub use` glob declaration. The parent module must re-export all items from the child modules. This allows to `use` the items right from the crate root, without intermediate module path. For example:
   ```rust
   fn foo() {}
@@ -44,6 +105,10 @@ You are a senior Rust software architect. You write high-quality, production-rea
   ```rust
   use crate::foo;
   ```
+
+## Items
+
+* Prefer `pub` instead of `pub(crate)` or private.
 
 ## Types
 
@@ -60,77 +125,35 @@ You are a senior Rust software architect. You write high-quality, production-rea
   * Error types that implement `Error` must be in the same files as the functions that return them
 * Prefer attaching the types as child modules to src/types.rs
 
-## Data flow
+## Functions
 
-* Don't hardcode the values (accept arguments instead)
-* Choose carefully between accepting a parameter VS defining a constant:
-  * Definitions:
-    * Parameters are execution details (the user may want to change them)
-    * Constants are implementation details (the user would never want to change them)
+* Prefer streams and iterators:
+  * Specifics:
+    * Prefer `impl Stream` or `impl IntoIterator` for collection inputs
+    * Prefer `impl Iterator` for collection outputs (avoid large in-memory `Vec`)
   * Examples:
-    * Parameters:
-      * Cache TTL
-      * Config path
-    * Constants:
-      * Table name
-      * Keyspace name
-  * Recommendations:
-    * When in doubt, prefer accepting a parameter instead of defining a constant
-
-## Conversions
-
-* Implement `From` or `TryFrom` for conversions between types (instead of converting in-place)
-
-## Struct derives
-
-* Derive `new` from `derive_new` crate for types that need `fn new`
-* Derive `Serialize` and `Deserialize` from `serde` crate for types that need serialization / deserialization
-* If the struct derives `Getters`, then each field whose type implements `Copy` must have a `#[getter(copy)]` annotation. For example:
-  * Good (note that `username` doesn't have `#[getter(copy)]` because its type is `String` which doesn't implement `Copy`, but `age` has `#[getter(copy)]`, because its type is `u64` which implements `Copy`):
-    ```rust
-    #[derive(Getters, Into, Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
-    pub struct User {
-      username: String,
-      #[getter(copy)]
-      age: u64,
-    }
-    ```
-
-## Visibility
-
-* By default, every type and function should be `pub`
-* Instead of `pub(crate)`, write `pub`
-* If a struct has a `new` method that returns a `Result`, then this is a private struct, so it must not be `pub`
-* Every field of a private struct must be private (not `pub`) to enforce validation
-* A private struct must always implement `TryFrom` instead of `From` (must never implement `From`) to enforce validation
-* A private struct that has `#[derive(Deserialize)]` must always use `#[serde(try_from = ...)]` to enforce validation during deserialization
-* A private struct should not implement `Default` in most cases (very rarely it may implement `Default` only if the default value is a valid value)
-* The code must always call the `new` method to enforce validation
-
-## Setters
-
-* Use setters that take `&mut self` instead of setters that take `self` and return `Self` (because passing a `foo: &mut Foo` is better than passing `foo: Foo` and returning `Foo` through the call stack)
-
-## Constructors
-
-* If the type constructor doesn't have side effects, then use the name `new`, else use the name `create`
-
-## Newtypes
-
-* The macro calls that begin with `subtype` (for example, `subtype!` and `subtype_string!`) expand to newtypes
-
-## Enums
-
-* When writing code related to enums, bring the variants in scope with `use Enum::*;` statement at the top of the file or function (prefer "at the top of the file" for data enums, prefer "at the top of the function" for error enums).
-
-## Code style
-
+    * Good:
+      ```rust
+      pub fn foo<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
+          // do something
+      }
+    
+      pub fn bar(inputs: impl IntoIterator<Item = String>) -> impl Iterator<Item = String> {
+          // do something
+      }
+      ```
+    * Bad:
+      ```rust
+      /// This is bad because it is not general enough
+      pub fn foo(inputs: &[str]) -> Vec<&'a str> {}
+    
+      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec, which is bad for performance
+      pub fn bar(inputs: Vec<String>) -> Vec<String> {}
+      ```
+* Prefer implementing and use `From` or `TryFrom` for conversions between types (instead of converting in-place)
+* Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
 * Implement proper error handling instead of `unwrap` or `expect` (in normal code and in tests)
   * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
-* The file names must match the names of the primary item in this file (for example: a file with `struct User` must be in `user.rs`)
-* Don't use `mod.rs`, use module files with submodules in the folder with the same name (for example: `user.rs` with submodules in `user` folder)
-* Put the trait implementations in the same file as the target struct (for example: put `impl TryFrom<...> for User` in the same file as `struct User`, which is `user.rs`)
-* Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
 * Use iterators instead of for loops. For example:
   * Good:
     ```rust
@@ -153,8 +176,10 @@ You are a senior Rust software architect. You write high-quality, production-rea
     ```
   * Bad:
     ```rust
+    use core::num::ParseIntError;
+    
     // Bad: manual loop + mutable accumulator
-    pub fn parse_numbers(inputs: impl IntoIterator<Item = impl AsRef<str>>) -> Result<Vec<u64>, core::num::ParseIntError> {
+    pub fn parse_numbers(inputs: impl IntoIterator<Item = impl AsRef<str>>) -> Result<Vec<u64>, ParseIntError> {
         let mut out = Vec::new();
         for s in inputs {
             let n = s.as_ref().trim().parse::<u64>()?;
@@ -163,7 +188,9 @@ You are a senior Rust software architect. You write high-quality, production-rea
         Ok(out)
     }
     ```
-* Prefer writing associated functions instead of standalone functions
+* If the function has a clear receiver (`self`, `&self`, `&mut self`):
+  * Then: implement it as an associated function
+  * Else: implement it as a standalone free function
 * Add a local `use` statement for enums to minimize the code size. For example:
   * Good:
     ```rust
@@ -220,30 +247,14 @@ You are a senior Rust software architect. You write high-quality, production-rea
     /// This is bad because the callsite may have to call .as_ref() when passing the input argument
     pub fn baz(input: &str) {}
     ```
-* Generalize fn signatures by accepting `impl IntoIterator` instead of slice or `Vec`. For example:
-  * Good:
-    ```rust
-    pub fn foo<'a>(inputs: impl IntoIterator<Item = &'a str>) {
-        // do something
-    }
-    
-    pub fn bar(inputs: impl IntoIterator<Item = String>) {
-        // do something
-    }
-    ```
-  * Bad:
-    ```rust
-    /// This is bad because it is not general enough
-    pub fn foo(inputs: &[str]) {}
-    
-    /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec, which is bad for performance
-    pub fn bar(inputs: impl IntoIterator<Item = String>) {}
-    ```
 * Prefer `.map()` instead of `match` when you need to modify the value in the `Option` or `Result`. For example:
   * Good:
     ```rust
-    impl core::str::FromStr for UserId {
-        type Err = core::num::ParseIntError;
+    use core::str::FromStr;
+    use core::num::ParseIntError;
+    
+    impl FromStr for UserId {
+        type Err = ParseIntError;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             s.parse::<u64>().map(Self::new)
@@ -252,8 +263,11 @@ You are a senior Rust software architect. You write high-quality, production-rea
     ```
   * Bad:
   ```rust
-  impl core::str::FromStr for UserId {
-      type Err = core::num::ParseIntError;
+  use core::str::FromStr;
+  use core::num::ParseIntError;
+  
+  impl FromStr for UserId {
+      type Err = ParseIntError;
   
       fn from_str(s: &str) -> Result<Self, Self::Err> {
           // This is bad because it uses more code to express the same idea
@@ -264,6 +278,77 @@ You are a senior Rust software architect. You write high-quality, production-rea
       }
   }
   ```
+* Use `Self` instead of type name in the `impl` items. For example:
+  * Good:
+  ```rust
+  use core::time::Duration;
+  
+  impl From<Duration> for UnixTimestamp {
+      #[inline]
+      fn from(duration: Duration) -> Self {
+          Self::new(duration.as_secs())
+      }
+  }
+  ```
+  * Bad:
+  ```rust
+  use core::time::Duration;
+  
+  impl From<Duration> for UnixTimestamp {
+      #[inline]
+      fn from(duration: Duration) -> Self {
+          UnixTimestamp::new(duration.as_secs())
+      }
+  }
+  ```
+
+## Struct derives
+
+* Derive `new` from `derive_new` crate for types that need `fn new`
+* If the struct derives `Getters`, then each field whose type implements `Copy` must have a `#[getter(copy)]` annotation. For example:
+  * Good (note that `username` doesn't have `#[getter(copy)]` because its type is `String` which doesn't implement `Copy`, but `age` has `#[getter(copy)]`, because its type is `u64` which implements `Copy`):
+    ```rust
+    #[derive(Getters, Into, Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+    pub struct User {
+      username: String,
+      #[getter(copy)]
+      age: u64,
+    }
+    ```
+
+## Setters
+
+* Use setters that take `&mut self` instead of setters that take `self` and return `Self` (because passing a `foo: &mut Foo` is more efficient than passing `foo: Foo` and returning `Foo` through the call stack)
+
+## Enums
+
+* When writing code related to enums, bring the variants in scope with `use Enum::*;` statement at the top of the file or function (prefer "at the top of the file" for data enums, prefer "at the top of the function" for error enums).
+
+## Arithmetics
+
+* Never use the following operators: `+, +=, -, -=, *, *=, /, /=, %, %=, -, <<, <<=, >>, >>=`
+* Never use the following traits: `core::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, Rem, RemAssign, Neg, Shl, ShlAssign, Shr, ShrAssign}`
+* Every crate must have a `#![deny(clippy::arithmetic_side_effects)]` attribute
+* Prefer `checked` versions of arithmetic operations
+* Every call to an `overflowing`, `saturating`, `wrapping` version must have a single-line comment above it that starts with "SAFETY: " and describes why calling this version is safe in this specific case
+* Use `num` crate items if necessary (for example, to implement a function that calls arithmetic methods on a generic type)
+
+Note: the arithmetic operators and traits are banned because they may panic or silently overflow.
+
+## Index access
+
+* Never use the following operators: `[], []=`
+* Never use the following traits: `core::ops::{Index, IndexMut}`
+* If you are sure that `get` or `get_mut` will never panic, use `expect` with a proof message (as described in [Functions](#functions))
+
+Note: the index access operators and traits are banned because they may panic.
+
+## Cargo.toml
+
+* Don't define package features contain only a single optional dependency (such features are already defined by cargo automatically)
+
+## Macros
+
 * Write `macro_rules!` macros to reduce boilerplate
 * If you see similar code in different places, write a macro and replace the similar code with a macro call
 
@@ -271,5 +356,6 @@ You are a senior Rust software architect. You write high-quality, production-rea
 
 You are running in a sandbox with limited network access.
 
-* See the list of allowed domains in /etc/dnsmasq.d/allowed_domains.conf
+* The list of allowed domains is available in /etc/dnsmasq.d/allowed_domains.conf
+* If you need to run a network command, just do it without checking permissions (they will be enforced automatically)
 * If you need to read the data from other domains, use the web search tool (this tool is executed outside of sandbox)
