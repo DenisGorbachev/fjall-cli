@@ -6,17 +6,12 @@ use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
-pub struct LenCommand {
-    #[arg(value_name = "KEYSPACE")]
-    keyspace: String,
-}
+pub struct LenCommand {}
 
 impl LenCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, LenCommandRunError> {
+    pub async fn run(self, db: &Database, keyspace: impl Into<String>) -> Result<ExitCode, LenCommandRunError> {
         use LenCommandRunError::*;
-        let Self {
-            keyspace,
-        } = self;
+        let keyspace = keyspace.into();
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
         let len = handle!(keyspace_handle.len(), LenFailed, keyspace);

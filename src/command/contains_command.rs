@@ -7,9 +7,6 @@ use thiserror::Error;
 #[derive(clap::Parser, Clone, Debug)]
 #[command(long_about = "Exit codes: 0 = key exists, 127 = key not found, 1 = error.")]
 pub struct ContainsCommand {
-    #[arg(value_name = "KEYSPACE")]
-    keyspace: String,
-
     #[arg(value_name = "KEY")]
     key: String,
 
@@ -18,10 +15,10 @@ pub struct ContainsCommand {
 }
 
 impl ContainsCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, ContainsCommandRunError> {
+    pub async fn run(self, db: &Database, keyspace: impl Into<String>) -> Result<ExitCode, ContainsCommandRunError> {
         use ContainsCommandRunError::*;
+        let keyspace = keyspace.into();
         let Self {
-            keyspace,
             key,
             key_encoding,
         } = self;

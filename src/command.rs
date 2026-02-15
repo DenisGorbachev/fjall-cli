@@ -18,14 +18,9 @@ pub struct Command {
 
 #[derive(clap::Subcommand, Clone, Debug)]
 pub enum Subcommand {
+    ListKeyspaceNames(ListKeyspaceNamesCommand),
+    KeyspaceCount(KeyspaceCountCommand),
     Keyspace(KeyspaceCommand),
-    List(ListCommand),
-    Get(GetCommand),
-    Insert(InsertCommand),
-    Contains(ContainsCommand),
-    Len(LenCommand),
-    Clear(ClearCommand),
-    Delete(DeleteCommand),
 }
 
 impl Command {
@@ -44,14 +39,9 @@ impl Subcommand {
     pub async fn run(self, db: &Database) -> Result<ExitCode, SubcommandRunError> {
         use SubcommandRunError::*;
         match self {
+            ListKeyspaceNames(command) => map_err!(command.run(db).await, RunListKeyspaceNamesCommandFailed),
+            KeyspaceCount(command) => map_err!(command.run(db).await, RunKeyspaceCountCommandFailed),
             Keyspace(command) => map_err!(command.run(db).await, RunKeyspaceCommandFailed),
-            List(command) => map_err!(command.run(db).await, RunListCommandFailed),
-            Get(command) => map_err!(command.run(db).await, RunGetCommandFailed),
-            Insert(command) => map_err!(command.run(db).await, RunInsertCommandFailed),
-            Contains(command) => map_err!(command.run(db).await, RunContainsCommandFailed),
-            Len(command) => map_err!(command.run(db).await, RunLenCommandFailed),
-            Clear(command) => map_err!(command.run(db).await, RunClearCommandFailed),
-            Delete(command) => map_err!(command.run(db).await, RunDeleteCommandFailed),
         }
     }
 }
@@ -67,38 +57,31 @@ pub enum CommandRunError {
 
 #[derive(Error, Debug)]
 pub enum SubcommandRunError {
+    #[error("failed to run list-keyspace-names command")]
+    RunListKeyspaceNamesCommandFailed { source: ListKeyspaceNamesCommandRunError },
+
+    #[error("failed to run keyspace-count command")]
+    RunKeyspaceCountCommandFailed { source: KeyspaceCountCommandRunError },
+
     #[error("failed to run keyspace command")]
     RunKeyspaceCommandFailed { source: KeyspaceCommandRunError },
-
-    #[error("failed to run list command")]
-    RunListCommandFailed { source: ListCommandRunError },
-
-    #[error("failed to run get command")]
-    RunGetCommandFailed { source: GetCommandRunError },
-
-    #[error("failed to run insert command")]
-    RunInsertCommandFailed { source: InsertCommandRunError },
-
-    #[error("failed to run contains command")]
-    RunContainsCommandFailed { source: ContainsCommandRunError },
-
-    #[error("failed to run len command")]
-    RunLenCommandFailed { source: LenCommandRunError },
-
-    #[error("failed to run clear command")]
-    RunClearCommandFailed { source: ClearCommandRunError },
-
-    #[error("failed to run delete command")]
-    RunDeleteCommandFailed { source: DeleteCommandRunError },
 }
 
 mod keyspace_command;
 
 pub use keyspace_command::*;
 
-mod list_command;
+mod list_keyspace_names_command;
 
-pub use list_command::*;
+pub use list_keyspace_names_command::*;
+
+mod keyspace_count_command;
+
+pub use keyspace_count_command::*;
+
+mod iter_command;
+
+pub use iter_command::*;
 
 mod get_command;
 

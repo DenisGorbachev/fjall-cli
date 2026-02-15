@@ -11,10 +11,12 @@ fn clear_repro() {
     let sh = Shell::new().unwrap();
     let sh = sh.with_var("FJALL_DB", db_path);
 
-    cmd!(sh, "{bin} insert items key value").run().unwrap();
-    cmd!(sh, "{bin} clear items").run().unwrap();
+    cmd!(sh, "{bin} keyspace items insert key value")
+        .run()
+        .unwrap();
+    cmd!(sh, "{bin} keyspace items clear").run().unwrap();
 
-    let output = cmd!(sh, "{bin} list items").output().unwrap();
+    let output = cmd!(sh, "{bin} keyspace items iter").output().unwrap();
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert_eq!(stdout, "");
 }

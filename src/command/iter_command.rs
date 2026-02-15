@@ -7,10 +7,7 @@ use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
-pub struct ListCommand {
-    #[arg(value_name = "KEYSPACE")]
-    keyspace: String,
-
+pub struct IterCommand {
     #[arg(long, value_enum, default_value_t = OutputKind::KeyValue)]
     kind: OutputKind,
 
@@ -39,11 +36,11 @@ pub struct ListCommand {
     limit: Option<usize>,
 }
 
-impl ListCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, ListCommandRunError> {
-        use ListCommandRunError::*;
+impl IterCommand {
+    pub async fn run(self, db: &Database, keyspace: impl Into<String>) -> Result<ExitCode, IterCommandRunError> {
+        use IterCommandRunError::*;
+        let keyspace = keyspace.into();
         let Self {
-            keyspace,
             kind,
             item_prefix,
             item_suffix,
@@ -69,8 +66,8 @@ impl ListCommand {
         Ok(ExitCode::SUCCESS)
     }
 
-    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, affixes: &OutputAffixes, offset: usize, limit: Option<usize>) -> Result<(), ListCommandWriteItemsError> {
-        use ListCommandWriteItemsError::*;
+    pub fn write_items(writer: &mut impl Write, keyspace: &Keyspace, kind: &OutputKind, affixes: &OutputAffixes, offset: usize, limit: Option<usize>) -> Result<(), IterCommandWriteItemsError> {
+        use IterCommandWriteItemsError::*;
         let result = match limit {
             Some(limit) => keyspace
                 .iter()
@@ -85,8 +82,8 @@ impl ListCommand {
         map_err!(result, WriteItemFailed)
     }
 
-    pub fn write_item(writer: &mut impl Write, kind: &OutputKind, affixes: &OutputAffixes, guard: Guard) -> Result<(), ListCommandWriteItemError> {
-        use ListCommandWriteItemError::*;
+    pub fn write_item(writer: &mut impl Write, kind: &OutputKind, affixes: &OutputAffixes, guard: Guard) -> Result<(), IterCommandWriteItemError> {
+        use IterCommandWriteItemError::*;
         let (key, value) = handle!(guard.into_inner(), IntoInnerFailed);
         handle!(kind.write(writer, &key, &value, affixes), WriteFailed);
         Ok(())
@@ -94,7 +91,7 @@ impl ListCommand {
 }
 
 #[derive(Error, Debug)]
-pub enum ListCommandRunError {
+pub enum IterCommandRunError {
     #[error("keyspace '{keyspace}' not found")]
     KeyspaceNotFound { keyspace: String },
 
@@ -102,17 +99,17 @@ pub enum ListCommandRunError {
     KeyspaceFailed { source: fjall::Error, keyspace: String },
 
     #[error("failed to write items for keyspace '{keyspace}'")]
-    WriteItemsFailed { source: ListCommandWriteItemsError, keyspace: String },
+    WriteItemsFailed { source: IterCommandWriteItemsError, keyspace: String },
 }
 
 #[derive(Error, Debug)]
-pub enum ListCommandWriteItemsError {
+pub enum IterCommandWriteItemsError {
     #[error("failed to write item")]
-    WriteItemFailed { source: ListCommandWriteItemError },
+    WriteItemFailed { source: IterCommandWriteItemError },
 }
 
 #[derive(Error, Debug)]
-pub enum ListCommandWriteItemError {
+pub enum IterCommandWriteItemError {
     #[error("failed to read key-value pair")]
     IntoInnerFailed { source: fjall::Error },
 

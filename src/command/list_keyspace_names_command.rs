@@ -6,11 +6,11 @@ use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
-pub struct KeyspaceListCommand {}
+pub struct ListKeyspaceNamesCommand {}
 
-impl KeyspaceListCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, KeyspaceListCommandRunError> {
-        use KeyspaceListCommandRunError::*;
+impl ListKeyspaceNamesCommand {
+    pub async fn run(self, db: &Database) -> Result<ExitCode, ListKeyspaceNamesCommandRunError> {
+        use ListKeyspaceNamesCommandRunError::*;
         let mut stdout = io::stdout().lock();
         let result = db.list_keyspace_names().into_iter().try_for_each(|name| {
             stdout
@@ -23,7 +23,7 @@ impl KeyspaceListCommand {
 }
 
 #[derive(Error, Debug)]
-pub enum KeyspaceListCommandRunError {
+pub enum ListKeyspaceNamesCommandRunError {
     #[error("failed to write keyspace names to stdout")]
     WriteFailed { source: io::Error },
 }

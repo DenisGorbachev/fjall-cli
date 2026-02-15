@@ -318,19 +318,30 @@ A child-command enum that selects one database operation exposed by this CLI.
 
 Constructors:
 
+* ListKeyspaceNames.
+* KeyspaceCount.
 * Keyspace.
-* List.
-* Get.
-* Insert.
-* Contains.
-* Len.
-* Clear.
 
 ### KeyspaceCommand
 
-A command that contains Keyspace-prefixed subcommands.
+A command that acts as an envelope for keyspace-related operations.
 
-### KeyspaceListCommand
+Requirements:
+
+* Must support keyspace-scoped subcommands by accepting keyspace name first.
+* Must include the following keyspace-scoped operations:
+  * `list`
+  * `get`
+  * `insert`
+  * `contains`
+  * `len`
+  * `clear`
+  * `delete`
+* Must support the following invocation shape for keyspace-scoped commands:
+  * `fjall --db ./db keyspace my_items get my_key`
+* Must be implemented with clap derive (v4).
+
+### ListKeyspaceNamesCommand
 
 A command that lists all keyspaces in a `fjall::Database`.
 
@@ -340,6 +351,10 @@ Requirements:
 * Must write keyspace names to stdout as UTF-8 bytes.
 * Must write exactly one `\n` byte after each keyspace name.
 
+Examples:
+
+* `fjall --db ./db list-keyspace-names`
+
 ### KeyspaceCountCommand
 
 A command that outputs the count of keyspaces in a `fjall::Database`.
@@ -348,6 +363,10 @@ Requirements:
 
 * Must call `Database::keyspace_count()`.
 
+Examples:
+
+* `fjall --db ./db keyspace-count`
+
 ### ListCommand
 
 A command that streams key-value pairs from a single keyspace.
@@ -355,13 +374,13 @@ A command that streams key-value pairs from a single keyspace.
 Examples:
 
 * List all entries in one keyspace.
-  * `fjall --db ./db list my_items`.
+  * `fjall --db ./db keyspace my_items list`.
 * List values separated by \0.
-  * `fjall --db ./db list my_items --kind value --value-suffix "\0"`.
+  * `fjall --db ./db keyspace my_items list --kind value --value-suffix "\0"`.
 
 Requirements:
 
-* Must require `keyspace` as a positional argument.
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 * Must iterate using `Keyspace::iter()`.
 * Must accept `--kind <OutputKind>`
@@ -385,8 +404,13 @@ Notes:
 
 A command that outputs the keyspace len.
 
+Examples:
+
+* `fjall --db ./db keyspace my_items len`
+
 Requirements:
 
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must use `len`, not `approximate_len`
 
 ### ClearCommand
@@ -396,11 +420,11 @@ A command that clears a keyspace.
 Examples:
 
 * Clear one keyspace.
-  * `fjall --db ./db clear my_items`.
+  * `fjall --db ./db keyspace my_items clear`.
 
 Requirements:
 
-* Must require `keyspace` as a positional argument.
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 * Must call `Keyspace::clear()`.
 * Must treat a non-existent keyspace name as an error.
@@ -414,8 +438,13 @@ Notes:
 
 A command that deletes a keyspace.
 
+Examples:
+
+* `fjall --db ./db keyspace my_items delete`
+
 Requirements:
 
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must call `Database::delete_keyspace()`.
 
 Notes:
@@ -433,16 +462,16 @@ Synonyms:
 Examples:
 
 * Check existence with UTF-8 key.
-  * `fjall --db ./db contains my_items my_key`.
+  * `fjall --db ./db keyspace my_items contains my_key`.
 * Check existence with hex key.
-  * `fjall --db ./db contains my_items deadbeef --key-encoding hex`.
+  * `fjall --db ./db keyspace my_items contains deadbeef --key-encoding hex`.
 * Check existence with key bytes from a file.
-  * `fjall --db ./db contains my_items ./key.bin --key-encoding path`.
+  * `fjall --db ./db keyspace my_items contains ./key.bin --key-encoding path`.
 
 Requirements:
 
-* Must parse `keyspace` as a required positional argument.
 * Must parse `key` as a required positional argument.
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must accept `--key-encoding <ByteEncoding>`.
 * Must decode the `key` argument into a byte vector according to `--key-encoding`.
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
@@ -464,17 +493,17 @@ A command that retrieves a value for a key from a keyspace.
 Examples:
 
 * Get a value.
-  * `fjall --db ./db get my_items my_key`.
+  * `fjall --db ./db keyspace my_items get my_key`.
 * Get a value with the trailing newline (note: this example is Bash/Zsh-specific).
-  * `fjall --db ./db get my_items my_key --value-suffix $'\n'`.
+  * `fjall --db ./db keyspace my_items get my_key --value-suffix $'\n'`.
 
 Requirements:
 
-* Must parse `keyspace` as a required positional argument.
 * Must parse `key` as a required positional argument.
 * Must accept `--key-encoding <ByteEncoding>`.
 * Must accept `--value-prefix <PrefixKind>` (default: None).
 * Must accept `--value-suffix <Suffix>` (default: None).
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must decode the `key` argument into a byte vector according to `--key-encoding`.
 * Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 * Must call `Keyspace::get(key_bytes)`.
@@ -493,17 +522,17 @@ A command that writes a key-value pair into a keyspace.
 Examples:
 
 * Insert a UTF-8 key and UTF-8 value.
-  * `fjall --db ./db insert my_items my_key my_value`.
+  * `fjall --db ./db keyspace my_items insert my_key my_value`.
 * Insert a hex key and value.
-  * `fjall --db ./db insert my_items deadbeef cafe --key-encoding hex --value-encoding hex`.
+  * `fjall --db ./db keyspace my_items insert deadbeef cafe --key-encoding hex --value-encoding hex`.
 * Insert a value from a file.
-  * `fjall --db ./db insert my_items my_key ./value.bin --value-encoding path`.
+  * `fjall --db ./db keyspace my_items insert my_key ./value.bin --value-encoding path`.
 
 Requirements:
 
-* Must parse `keyspace` as a required positional argument.
 * Must parse `key` as a required positional argument.
 * Must parse `value` as a required positional argument.
+* Must receive keyspace name from `KeyspaceCommand`.
 * Must accept `--key-encoding <ByteEncoding>`.
 * Must accept `--value-encoding <ByteEncoding>`.
 * Must decode the `key` argument into a byte vector according to `--key-encoding`.

@@ -13,18 +13,18 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let sh = handle!(Shell::new(), ShellNewFailed);
     let sh = sh.with_var("FJALL_DB", db_path);
 
-    handle!(cmd!(sh, "{bin} insert items key value").run(), InsertRunFailed);
+    handle!(cmd!(sh, "{bin} keyspace items insert key value").run(), InsertRunFailed);
 
-    let output = handle!(cmd!(sh, "{bin} len items").output(), LenOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} keyspace items len").output(), LenOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), LenUtf8Failed);
     assert_eq!(stdout, "1\n");
 
-    let output = handle!(cmd!(sh, "{bin} keyspace count").output(), KeyspaceCountOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} keyspace-count").output(), KeyspaceCountOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceCountUtf8Failed);
     assert_eq!(stdout, "1\n");
 
     let output = handle!(
-        cmd!(sh, "{bin} contains items key")
+        cmd!(sh, "{bin} keyspace items contains key")
             .ignore_status()
             .output(),
         ContainsExistingOutputFailed
@@ -34,7 +34,7 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     assert_eq!(status, 0);
 
     let output = handle!(
-        cmd!(sh, "{bin} contains items missing")
+        cmd!(sh, "{bin} keyspace items contains missing")
             .ignore_status()
             .output(),
         ContainsMissingOutputFailed
@@ -43,36 +43,36 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let status = handle_opt!(output.status.code(), ContainsMissingStatusMissing);
     assert_eq!(status, 127);
 
-    let output = handle!(cmd!(sh, "{bin} get items key").output(), GetOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} keyspace items get key").output(), GetOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), GetUtf8Failed);
     assert_eq!(stdout, "value");
 
-    let output = handle!(cmd!(sh, "{bin} list items").output(), ListOutputFailed);
-    let stdout = handle!(String::from_utf8(output.stdout), ListUtf8Failed);
+    let output = handle!(cmd!(sh, "{bin} keyspace items iter").output(), IterOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), IterUtf8Failed);
     assert_eq!(stdout, "keyvalue");
 
-    let output = handle!(cmd!(sh, "{bin} keyspace list").output(), KeyspaceListOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} list-keyspace-names").output(), KeyspaceListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListUtf8Failed);
     assert_eq!(stdout, "items\n");
 
     // TODO: the "clear" tests are commented out until `Keyspace::clear` is fixed (see tests/clear_repro.rs)
-    // handle!(cmd!(sh, "{bin} clear items").run(), ClearRunFailed);
+    // handle!(cmd!(sh, "{bin} keyspace items clear").run(), ClearRunFailed);
     //
-    // let output = handle!(cmd!(sh, "{bin} list items").output(), ListAfterClearOutputFailed);
-    // let stdout = handle!(String::from_utf8(output.stdout), ListAfterClearUtf8Failed);
+    // let output = handle!(cmd!(sh, "{bin} keyspace items iter").output(), IterAfterClearOutputFailed);
+    // let stdout = handle!(String::from_utf8(output.stdout), IterAfterClearUtf8Failed);
     // assert_eq!(stdout, "");
     //
-    // let output = handle!(cmd!(sh, "{bin} len items").output(), LenAfterClearOutputFailed);
+    // let output = handle!(cmd!(sh, "{bin} keyspace items len").output(), LenAfterClearOutputFailed);
     // let stdout = handle!(String::from_utf8(output.stdout), LenAfterClearUtf8Failed);
     // assert_eq!(stdout, "0\n");
 
-    handle!(cmd!(sh, "{bin} delete items").run(), DeleteRunFailed);
+    handle!(cmd!(sh, "{bin} keyspace items delete").run(), DeleteRunFailed);
 
-    let output = handle!(cmd!(sh, "{bin} keyspace count").output(), KeyspaceCountAfterDeleteOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} keyspace-count").output(), KeyspaceCountAfterDeleteOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceCountAfterDeleteUtf8Failed);
     assert_eq!(stdout, "0\n");
 
-    let output = handle!(cmd!(sh, "{bin} keyspace list").output(), KeyspaceListAfterDeleteOutputFailed);
+    let output = handle!(cmd!(sh, "{bin} list-keyspace-names").output(), KeyspaceListAfterDeleteOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListAfterDeleteUtf8Failed);
     assert_eq!(stdout, "");
 
@@ -96,10 +96,10 @@ pub enum FullCliFlowError {
     #[error("failed to decode len output as utf-8")]
     LenUtf8Failed { source: FromUtf8Error },
 
-    #[error("failed to run keyspace count command")]
+    #[error("failed to run keyspace-count command")]
     KeyspaceCountOutputFailed { source: xshell::Error },
 
-    #[error("failed to decode keyspace count output as utf-8")]
+    #[error("failed to decode keyspace-count output as utf-8")]
     KeyspaceCountUtf8Failed { source: FromUtf8Error },
 
     #[error("failed to run contains command for existing key")]
@@ -126,26 +126,26 @@ pub enum FullCliFlowError {
     #[error("failed to decode get output as utf-8")]
     GetUtf8Failed { source: FromUtf8Error },
 
-    #[error("failed to run list command")]
-    ListOutputFailed { source: xshell::Error },
+    #[error("failed to run iter command")]
+    IterOutputFailed { source: xshell::Error },
 
-    #[error("failed to decode list output as utf-8")]
-    ListUtf8Failed { source: FromUtf8Error },
+    #[error("failed to decode iter output as utf-8")]
+    IterUtf8Failed { source: FromUtf8Error },
 
-    #[error("failed to run keyspace list command")]
+    #[error("failed to run list-keyspace-names command")]
     KeyspaceListOutputFailed { source: xshell::Error },
 
-    #[error("failed to decode keyspace list output as utf-8")]
+    #[error("failed to decode list-keyspace-names output as utf-8")]
     KeyspaceListUtf8Failed { source: FromUtf8Error },
 
     #[error("failed to run clear command")]
     ClearRunFailed { source: xshell::Error },
 
-    #[error("failed to run list command after clear")]
-    ListAfterClearOutputFailed { source: xshell::Error },
+    #[error("failed to run iter command after clear")]
+    IterAfterClearOutputFailed { source: xshell::Error },
 
-    #[error("failed to decode list output after clear as utf-8")]
-    ListAfterClearUtf8Failed { source: FromUtf8Error },
+    #[error("failed to decode iter output after clear as utf-8")]
+    IterAfterClearUtf8Failed { source: FromUtf8Error },
 
     #[error("failed to run len command after clear")]
     LenAfterClearOutputFailed { source: xshell::Error },
@@ -156,15 +156,15 @@ pub enum FullCliFlowError {
     #[error("failed to run delete command")]
     DeleteRunFailed { source: xshell::Error },
 
-    #[error("failed to run keyspace count command after delete")]
+    #[error("failed to run keyspace-count command after delete")]
     KeyspaceCountAfterDeleteOutputFailed { source: xshell::Error },
 
-    #[error("failed to decode keyspace count output after delete as utf-8")]
+    #[error("failed to decode keyspace-count output after delete as utf-8")]
     KeyspaceCountAfterDeleteUtf8Failed { source: FromUtf8Error },
 
-    #[error("failed to run keyspace list command after delete")]
+    #[error("failed to run list-keyspace-names command after delete")]
     KeyspaceListAfterDeleteOutputFailed { source: xshell::Error },
 
-    #[error("failed to decode keyspace list output after delete as utf-8")]
+    #[error("failed to decode list-keyspace-names output after delete as utf-8")]
     KeyspaceListAfterDeleteUtf8Failed { source: FromUtf8Error },
 }

@@ -6,9 +6,6 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
 pub struct InsertCommand {
-    #[arg(value_name = "KEYSPACE")]
-    keyspace: String,
-
     #[arg(value_name = "KEY")]
     key: String,
 
@@ -23,10 +20,10 @@ pub struct InsertCommand {
 }
 
 impl InsertCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, InsertCommandRunError> {
+    pub async fn run(self, db: &Database, keyspace: impl Into<String>) -> Result<ExitCode, InsertCommandRunError> {
         use InsertCommandRunError::*;
+        let keyspace = keyspace.into();
         let Self {
-            keyspace,
             key,
             value,
             key_encoding,

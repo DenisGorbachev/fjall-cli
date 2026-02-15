@@ -4,17 +4,12 @@ use std::process::ExitCode;
 use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
-pub struct DeleteCommand {
-    #[arg(value_name = "KEYSPACE")]
-    keyspace: String,
-}
+pub struct DeleteCommand {}
 
 impl DeleteCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, DeleteCommandRunError> {
+    pub async fn run(self, db: &Database, keyspace: impl Into<String>) -> Result<ExitCode, DeleteCommandRunError> {
         use DeleteCommandRunError::*;
-        let Self {
-            keyspace,
-        } = self;
+        let keyspace = keyspace.into();
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
         handle!(db.delete_keyspace(keyspace_handle), DeleteKeyspaceFailed, keyspace);

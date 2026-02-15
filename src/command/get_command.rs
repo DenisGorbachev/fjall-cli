@@ -8,9 +8,6 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Clone, Debug)]
 pub struct GetCommand {
-    #[arg(value_name = "KEYSPACE")]
-    keyspace: String,
-
     #[arg(value_name = "KEY")]
     key: String,
 
@@ -25,10 +22,10 @@ pub struct GetCommand {
 }
 
 impl GetCommand {
-    pub async fn run(self, db: &Database) -> Result<ExitCode, GetCommandRunError> {
+    pub async fn run(self, db: &Database, keyspace: impl Into<String>) -> Result<ExitCode, GetCommandRunError> {
         use GetCommandRunError::*;
+        let keyspace = keyspace.into();
         let Self {
-            keyspace,
             key,
             key_encoding,
             value_prefix,
