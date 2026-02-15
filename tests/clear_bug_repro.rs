@@ -4,7 +4,7 @@ use xshell::{Shell, cmd};
 /// Same bug report from another user: https://github.com/fjall-rs/fjall/issues/241
 #[ignore]
 #[test]
-fn clear_repro() {
+fn clear_bug_repro() {
     let bin = env!("CARGO_BIN_EXE_fjall");
     let temp_dir = TempDir::new("fjall_cli").unwrap();
     let db_path = temp_dir.path();

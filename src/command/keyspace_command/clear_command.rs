@@ -12,8 +12,9 @@ impl ClearCommand {
         let keyspace = keyspace.into();
         handle_bool!(!db.keyspace_exists(&keyspace), KeyspaceNotFound, keyspace);
         let keyspace_handle = handle!(db.keyspace(&keyspace, KeyspaceCreateOptions::default), KeyspaceFailed, keyspace);
+        eprintln!("This command may not clear the keyspace due to a bug in fjall v3.0.1");
         handle!(keyspace_handle.clear(), ClearFailed, keyspace);
-        db.persist(PersistMode::SyncAll).unwrap();
+        handle!(db.persist(PersistMode::SyncAll), PersistFailed, keyspace);
         Ok(ExitCode::SUCCESS)
     }
 }
@@ -28,4 +29,7 @@ pub enum ClearCommandRunError {
 
     #[error("failed to clear keyspace '{keyspace}'")]
     ClearFailed { source: fjall::Error, keyspace: String },
+
+    #[error("failed to persist keyspace clear operation for keyspace '{keyspace}'")]
+    PersistFailed { source: fjall::Error, keyspace: String },
 }
