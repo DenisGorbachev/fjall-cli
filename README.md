@@ -73,13 +73,36 @@ fjall keyspace-count
 
 ## Installation
 
+Install as executable:
+
+```shell
+cargo install --locked fjall-cli
+```
+
+Install as library dependency in your package:
+
 ```shell
 cargo add fjall-cli
 ```
 
-## Additional binaries
+## Usage
 
-* `fjall`
+```shell
+CLI for Fjall database
+
+Usage: fjall --db <DB> <COMMAND>
+
+Commands:
+  keyspace             
+  list-keyspace-names  
+  keyspace-count       
+  help                 Print this message or the help of the given subcommand(s)
+
+Options:
+      --db <DB>  [env: FJALL_DB=]
+  -h, --help     Print help
+  -V, --version  Print version
+```
 
 ## Gratitude
 
