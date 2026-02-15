@@ -9,7 +9,7 @@ Requirements:
 - Must produce a single binary with `fjall` name
 - Must contain a [full integration test](#full-integration-test)
 - Must use `xshell` version = "0.3.0-pre.2" in tests
-- Must contain crate-level documentation in src/lib.rs
+- Must contain [crate-level documentation](#crate-level-documentation)
 
 ## Command
 
@@ -340,6 +340,7 @@ Notes:
 
 ## Crate-level documentation
 
+- Must be located in `src/lib.rs`
 - Must have an "Example" section
   - Must demonstrate the commands similarly to the [full integration test](#full-integration-test)
 
