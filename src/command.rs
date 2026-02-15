@@ -18,9 +18,9 @@ pub struct Command {
 
 #[derive(clap::Subcommand, Clone, Debug)]
 pub enum Subcommand {
+    Keyspace(KeyspaceCommand),
     ListKeyspaceNames(ListKeyspaceNamesCommand),
     KeyspaceCount(KeyspaceCountCommand),
-    Keyspace(KeyspaceCommand),
 }
 
 impl Command {
@@ -39,9 +39,9 @@ impl Subcommand {
     pub async fn run(self, db: &Database) -> Result<ExitCode, SubcommandRunError> {
         use SubcommandRunError::*;
         match self {
+            Keyspace(command) => map_err!(command.run(db).await, RunKeyspaceCommandFailed),
             ListKeyspaceNames(command) => map_err!(command.run(db).await, RunListKeyspaceNamesCommandFailed),
             KeyspaceCount(command) => map_err!(command.run(db).await, RunKeyspaceCountCommandFailed),
-            Keyspace(command) => map_err!(command.run(db).await, RunKeyspaceCommandFailed),
         }
     }
 }
@@ -57,14 +57,14 @@ pub enum CommandRunError {
 
 #[derive(Error, Debug)]
 pub enum SubcommandRunError {
+    #[error("failed to run keyspace command")]
+    RunKeyspaceCommandFailed { source: KeyspaceCommandRunError },
+
     #[error("failed to run list-keyspace-names command")]
     RunListKeyspaceNamesCommandFailed { source: ListKeyspaceNamesCommandRunError },
 
     #[error("failed to run keyspace-count command")]
     RunKeyspaceCountCommandFailed { source: KeyspaceCountCommandRunError },
-
-    #[error("failed to run keyspace command")]
-    RunKeyspaceCommandFailed { source: KeyspaceCommandRunError },
 }
 
 mod keyspace_command;

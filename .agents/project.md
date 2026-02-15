@@ -7,9 +7,10 @@ A package that implements a CLI for Fjall key-value database.
 Requirements:
 
 - Must produce a single binary with `fjall` name
-- Must contain a [full integration test](#full-integration-test)
 - Must use `xshell` version = "0.3.0-pre.2" in tests
+- Must contain a [full integration test](#full-integration-test)
 - Must contain [crate-level documentation](#crate-level-documentation)
+  - Must be kept in sync with this specification
 
 ## Command
 
@@ -341,6 +342,7 @@ Notes:
 ## Crate-level documentation
 
 - Must be located in `src/lib.rs`
+- Must not contain a title (it will be )
 - Must have an "Example" section
   - Must demonstrate the commands similarly to the [full integration test](#full-integration-test)
 
