@@ -342,7 +342,6 @@ Notes:
 ## Crate-level documentation
 
 - Must be located in `src/lib.rs`
-- Must not contain a title (it will be )
 - Must have an "Example" section
   - Must demonstrate the commands similarly to the [full integration test](#full-integration-test)
 
