@@ -61,15 +61,14 @@ fjall keyspace items iter --key-suffix ":" --value-suffix $'\n'
 fjall list-keyspace-names
 # items
 
+fjall keyspace items clear
+fjall keyspace items len
+# 0
+
 fjall keyspace items delete
 fjall keyspace-count
 # 0
 ```
-
-## Known bugs
-
-* `clear` may not persistently clear a keyspace in fjall v3.0.1 due to
-  [fjall-rs/fjall#241](https://github.com/fjall-rs/fjall/issues/241).
 <!-- crate documentation end -->
 
 ## Installation

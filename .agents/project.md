@@ -147,13 +147,6 @@ Requirements:
 - Must open the keyspace via `Database::keyspace(keyspace, ...)`.
 - Must call `Keyspace::clear()`.
 - Must treat a non-existent keyspace name as an error.
-- Must contain a warning: "This command may not clear the keyspace due to a bug in fjall v3.0.1"
-- Must not be tested due the the bug in fjall
-
-Notes:
-
-- `Keyspace::clear` is buggy in fjall 3.0.1: the items are restored from the journal on the next run.
-  - Waiting for <https://github.com/fjall-rs/fjall/pull/242> to be merged
 
 ## DeleteCommand
 

@@ -55,16 +55,15 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListUtf8Failed);
     assert_eq!(stdout, "items\n");
 
-    // TODO: the "clear" tests are commented out until `Keyspace::clear` is fixed (see tests/clear_repro.rs)
-    // handle!(cmd!(sh, "{bin} keyspace items clear").run(), ClearRunFailed);
-    //
-    // let output = handle!(cmd!(sh, "{bin} keyspace items iter").output(), IterAfterClearOutputFailed);
-    // let stdout = handle!(String::from_utf8(output.stdout), IterAfterClearUtf8Failed);
-    // assert_eq!(stdout, "");
-    //
-    // let output = handle!(cmd!(sh, "{bin} keyspace items len").output(), LenAfterClearOutputFailed);
-    // let stdout = handle!(String::from_utf8(output.stdout), LenAfterClearUtf8Failed);
-    // assert_eq!(stdout, "0\n");
+    handle!(cmd!(sh, "{bin} keyspace items clear").run(), ClearRunFailed);
+
+    let output = handle!(cmd!(sh, "{bin} keyspace items iter").output(), IterAfterClearOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), IterAfterClearUtf8Failed);
+    assert_eq!(stdout, "");
+
+    let output = handle!(cmd!(sh, "{bin} keyspace items len").output(), LenAfterClearOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), LenAfterClearUtf8Failed);
+    assert_eq!(stdout, "0\n");
 
     handle!(cmd!(sh, "{bin} keyspace items delete").run(), DeleteRunFailed);
 
