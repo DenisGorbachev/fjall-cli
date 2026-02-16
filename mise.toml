@@ -11,9 +11,7 @@ cargo-binstall = "1.10.15"
 "npm:@commitlint/types" = "19.5.0"
 "npm:repomix" = "1.5.0"
 "cargo:cargo-insert-docs" = "1.2.0"
-"cargo:cargo-sort" = "1.0.9"
 "cargo:cargo-hack" = "0.6.33"
-"cargo:cargo-machete" = "0.7.0"
 "cargo:cargo-nextest" = "0.9.102"
 "cargo:cargo-expand" = "1.0.114"
 "cargo:rumdl" = "0.1.0"
@@ -30,9 +28,6 @@ run = "cargo clippy --all-targets --all-features -- -D warnings"
 [tasks."lint:docs"]
 run = "rumdl check"
 
-[tasks."lint:deps"]
-run = "cargo machete --with-metadata"
-
 [tasks."test"]
 depends = ["test:code", "test:docs"]
 
@@ -44,7 +39,7 @@ run = "cargo test --doc --all-features --no-fail-fast --quiet"
 
 [tasks."fix"]
 # run the tasks in parallel because they modify different files
-depends = ["fix:code", "fix:docs", "fix:deps", "fix:agents"]
+depends = ["fix:code", "fix:docs", "fix:agents"]
 
 [tasks."fix:code"]
 # run the tasks sequentially because they modify the same files
@@ -65,25 +60,13 @@ cargo clippy --all-targets --all-features -- -D warnings
 run = "cargo fmt --all"
 
 [tasks."fix:docs"]
+# `rumdl check --fix` may modify any file, so we need to stage all markdown files.
 # use `rumdl check --fix` instead of `rumdl fmt` because `rumdl check --fix` exits with 1 if errors remain (since v0.1.0)
-# `rumdl check --fix` may modify any file, so we need to `git add *.md` (`stage_fixed` only stages the files that were modified before `fix:docs` is run)
+# use a quoted git pathspec so ignored files (e.g. `*.local.md`) don't fail the task.
 run = """
 rumdl check --fix
-git add *.md
+git add -- '*.md'
 """
-
-[tasks."fix:deps"]
-# run the tasks sequentially because they modify the same files
-run = """
-mise run fix:deps:usage
-mise run fix:deps:order
-"""
-
-[tasks."fix:deps:usage"]
-run = "cargo machete --with-metadata --fix"
-
-[tasks."fix:deps:order"]
-run = "cargo sort"
 
 [tasks."fix:agents"]
 run = """
