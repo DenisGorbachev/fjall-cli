@@ -54,6 +54,7 @@ Requirements:
   - `insert`
   - `contains`
   - `len`
+  - `disk-size`
   - `clear`
   - `delete`
 - Must support the following invocation shape for keyspace-scoped commands:
@@ -131,6 +132,22 @@ Requirements:
 
 - Must receive keyspace name from `KeyspaceCommand`.
 - Must use `len`, not `approximate_len`
+
+## KeyspaceDiskSizeCommand
+
+A command that outputs the keyspace disk size in bytes.
+
+Examples:
+
+- `fjall --db ./db keyspace my_items disk-size`
+
+Requirements:
+
+- Must receive keyspace name from `KeyspaceCommand`.
+- Must open the keyspace via `Database::keyspace(keyspace, ...)`.
+- Must call `Keyspace::disk_space()`.
+- Must output the disk size as a decimal integer number of bytes.
+- Must treat a non-existent keyspace name as an error.
 
 ## ClearCommand
 
