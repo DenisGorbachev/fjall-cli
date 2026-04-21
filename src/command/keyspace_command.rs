@@ -21,6 +21,7 @@ pub enum KeyspaceSubcommand {
     Insert(InsertCommand),
     Contains(ContainsCommand),
     Len(LenCommand),
+    DiskSize(DiskSizeCommand),
     Clear(ClearCommand),
     Delete(DeleteCommand),
 }
@@ -38,6 +39,7 @@ impl KeyspaceCommand {
             Insert(command) => map_err!(command.run(db, keyspace).await, RunInsertCommandFailed),
             Contains(command) => map_err!(command.run(db, keyspace).await, RunContainsCommandFailed),
             Len(command) => map_err!(command.run(db, keyspace).await, RunLenCommandFailed),
+            DiskSize(command) => map_err!(command.run(db, keyspace).await, RunDiskSizeCommandFailed),
             Clear(command) => map_err!(command.run(db, keyspace).await, RunClearCommandFailed),
             Delete(command) => map_err!(command.run(db, keyspace).await, RunDeleteCommandFailed),
         }
@@ -61,6 +63,9 @@ pub enum KeyspaceCommandRunError {
     #[error("failed to run len command")]
     RunLenCommandFailed { source: LenCommandRunError },
 
+    #[error("failed to run disk-size command")]
+    RunDiskSizeCommandFailed { source: DiskSizeCommandRunError },
+
     #[error("failed to run clear command")]
     RunClearCommandFailed { source: ClearCommandRunError },
 
@@ -82,6 +87,9 @@ pub use contains_command::*;
 
 mod len_command;
 pub use len_command::*;
+
+mod disk_size_command;
+pub use disk_size_command::*;
 
 mod clear_command;
 pub use clear_command::*;

@@ -1,4 +1,5 @@
 use errgonomic::{handle, handle_bool, handle_opt};
+use std::num::ParseIntError;
 use std::string::FromUtf8Error;
 use tempdir::TempDir;
 use thiserror::Error;
@@ -51,6 +52,11 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let stdout = handle!(String::from_utf8(output.stdout), IterUtf8Failed);
     assert_eq!(stdout, "keyvalue");
 
+    let output = handle!(cmd!(sh, "{bin} keyspace items disk-size").output(), DiskSizeOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), DiskSizeUtf8Failed);
+    let disk_size = handle!(stdout.trim().parse::<u64>(), DiskSizeParseFailed);
+    handle_bool!(disk_size == 0, DiskSizeWasZero);
+
     let output = handle!(cmd!(sh, "{bin} list-keyspace-names").output(), KeyspaceListOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), KeyspaceListUtf8Failed);
     assert_eq!(stdout, "items\n");
@@ -60,6 +66,11 @@ fn full_cli_flow() -> Result<(), FullCliFlowError> {
     let output = handle!(cmd!(sh, "{bin} keyspace items iter").output(), IterAfterClearOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), IterAfterClearUtf8Failed);
     assert_eq!(stdout, "");
+
+    let output = handle!(cmd!(sh, "{bin} keyspace items disk-size").output(), DiskSizeAfterClearOutputFailed);
+    let stdout = handle!(String::from_utf8(output.stdout), DiskSizeAfterClearUtf8Failed);
+    let disk_size = handle!(stdout.trim().parse::<u64>(), DiskSizeAfterClearParseFailed);
+    handle_bool!(disk_size != 0, DiskSizeAfterClearWasNotZero);
 
     let output = handle!(cmd!(sh, "{bin} keyspace items len").output(), LenAfterClearOutputFailed);
     let stdout = handle!(String::from_utf8(output.stdout), LenAfterClearUtf8Failed);
@@ -131,6 +142,18 @@ pub enum FullCliFlowError {
     #[error("failed to decode iter output as utf-8")]
     IterUtf8Failed { source: FromUtf8Error },
 
+    #[error("failed to run disk-size command")]
+    DiskSizeOutputFailed { source: xshell::Error },
+
+    #[error("failed to decode disk-size output as utf-8")]
+    DiskSizeUtf8Failed { source: FromUtf8Error },
+
+    #[error("failed to parse disk-size output as integer")]
+    DiskSizeParseFailed { source: ParseIntError },
+
+    #[error("disk-size output was zero after inserting data")]
+    DiskSizeWasZero {},
+
     #[error("failed to run list-keyspace-names command")]
     KeyspaceListOutputFailed { source: xshell::Error },
 
@@ -145,6 +168,18 @@ pub enum FullCliFlowError {
 
     #[error("failed to decode iter output after clear as utf-8")]
     IterAfterClearUtf8Failed { source: FromUtf8Error },
+
+    #[error("failed to run disk-size command after clear")]
+    DiskSizeAfterClearOutputFailed { source: xshell::Error },
+
+    #[error("failed to decode disk-size output after clear as utf-8")]
+    DiskSizeAfterClearUtf8Failed { source: FromUtf8Error },
+
+    #[error("failed to parse disk-size output after clear as integer")]
+    DiskSizeAfterClearParseFailed { source: ParseIntError },
+
+    #[error("disk-size output was not zero after clearing data")]
+    DiskSizeAfterClearWasNotZero {},
 
     #[error("failed to run len command after clear")]
     LenAfterClearOutputFailed { source: xshell::Error },
