@@ -89,6 +89,13 @@ Notes:
 * Use `cargo add` to add dependencies at their latest versions
 * Set the timeout to 300000 ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
 
+### Recommended crates
+
+* `errgonomic` for error handling
+* `strum` for enum derives
+* `subtype` for defining newtypes
+* `tempfile` for creating temp dirs or files
+
 ### Files
 
 * The file name must match the name of the primary item in this file (for example: a file with `struct User` must be named `user.rs`)
@@ -109,6 +116,36 @@ Notes:
   ```rust
   use crate::foo;
   ```
+* Prefer short item paths over long item paths (use `use` statement), unless it's necessary for disambiguation. For example:
+  * Good:
+    ```rust
+    use clap::ValueEnum;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(ValueEnum, Serialize, Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
+  * Good (`serde` and `rkyv` prefixes are necessary for disambiguation):
+    ```rust
+    use clap::ValueEnum;
+
+    #[derive(ValueEnum, From, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
+  * Bad (`clap` and `serde` prefixes are not necessary for disambiguation because their trait names are unique in this module):
+    ```rust
+    #[derive(clap::ValueEnum, serde::Serialize, serde::Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
 
 ### Items
 
@@ -131,33 +168,48 @@ Notes:
 
 ### Functions
 
+* Implement proper error handling using macros from `errgonomic` crate instead of `unwrap` or `expect` (in normal code and in tests)
+  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * Prefer streams and iterators:
-  * Specifics:
-    * Prefer `impl Stream` or `impl IntoIterator` for collection inputs
-    * Prefer `impl Iterator` for collection outputs (avoid large in-memory `Vec`)
+  * Guidelines for inputs:
+    * If the function uses methods that are available only for a specific collection type:
+      * Then: prefer taking a specific collection type as input.
+      * Else: prefer taking an `impl Stream` or `impl IntoIterator` as input.
+  * Guidelines for outputs:
+    * If the function return type is naturally an iterator (for example, the function returns the output of a `map` or `filter`):
+      * Then: prefer returning an `impl Iterator` as output (there's no need to collect into `Vec`).
+      * Else: prefer returning a specific collection type as output.
   * Examples:
     * Good:
       ```rust
-      pub fn foo<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
-          // do something
+      /// This is good because the function doesn't use any type-specific methods, only generic Iterator trait methods
+      /// This is good because the function naturally returns an Iterator, not a specific collection type
+      pub fn filter_non_empty_strings<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
+          inputs.into_iter().filter(|i| i.is_empty().not())
       }
 
-      pub fn bar(inputs: impl IntoIterator<Item = String>) -> impl Iterator<Item = String> {
-          // do something
+      /// This is good because the function uses Vec-specific method `extend_from_slice`, so it can't take a generic `impl IntoIterator`
+      fn extend_args(mut args: Vec<String>, extra_args: &[String]) -> Vec<String> {
+          args.extend_from_slice(extra_args);
+          args
       }
       ```
     * Bad:
-      ```rust
-      /// This is bad because it is not general enough
-      pub fn foo(inputs: &[str]) -> Vec<&'a str> {}
+    * ```rust
+      /// This is bad because it needlessly converts a Vec into iter and then collects back into Vec
+      pub fn filter_non_empty_strings(inputs: Vec<&str>) -> Vec<&str> {
+          inputs
+              .into_iter()
+              .filter(|i| i.is_empty().not())
+              .collect::<Vec<_>>()
+      }
 
-      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec, which is bad for performance
+      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec for input, which is bad for performance
       pub fn bar(inputs: Vec<String>) -> Vec<String> {}
       ```
 * Prefer implementing and use `From` or `TryFrom` for conversions between types (instead of converting in-place)
+* Don't use early-return fast-path guards for empty vecs, iterators, streams (i.e. don't use `if items.is_empty() { return ...; }`)
 * Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
-* Implement proper error handling instead of `unwrap` or `expect` (in normal code and in tests)
-  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * Use iterators instead of for loops. For example:
   * Good:
     ```rust
@@ -347,14 +399,30 @@ Note: the arithmetic operators and traits are banned because they may panic or s
 
 Note: the index access operators and traits are banned because they may panic.
 
-### Cargo.toml
+### Test fn
 
-* Don't define package features contain only a single optional dependency (such features are already defined by cargo automatically)
+A function marked with `#[test]` or `#[tokio::test]`.
+
+* Must return a `Result`
+* Must implement proper error handling via `errgonomic` crate
+* Should use macros from `assertables` crate
+  * Should use `assert_infix` instead of `assert_gt`, `assert_ge`, `assert_lt`, `assert_le`, `assert_eq`
 
 ### Macros
 
 * Write `macro_rules!` macros to reduce boilerplate
 * If you see similar code in different places, write a macro and replace the similar code with a macro call
+
+### Shell
+
+* For shell scripts and commands that will be read by the user (written per direct request of the user):
+  * Use long options
+* For shell scripts and commands what won't be read by the user (written to accomplish a local task):
+  * Use short options
+
+### Cargo.toml
+
+* Don't define package features with only a single optional dependency (such features are already defined by cargo automatically)
 
 ### Sandbox
 
@@ -363,6 +431,135 @@ You are running in a sandbox with limited network access.
 * The list of allowed domains is available in /etc/dnsmasq.d/allowed\_domains.conf
 * If you need to run a network command, just do it without checking permissions (they will be enforced automatically)
 * If you need to read the data from other domains, use the web search tool (this tool is executed outside of sandbox)
+
+## CLI guidelines
+
+### Dependencies
+
+* `clap` (features: at least "derive", "env")
+* `tokio` (features: at least "macros", "rt", "rt-multi-thread")
+* `errgonomic`
+* `thiserror`
+
+### File layout and required items
+
+#### File `src/main.rs`
+
+* Must define a `main` entrypoint
+* Must define a `verify_cli` test for the top-level command exactly as in the example below (with `debug_assert`)
+
+Example:
+
+```rust
+use clap::Parser;
+use errgonomic::exit_result;
+use my_crate_name::Command;
+use std::process::ExitCode;
+
+#[tokio::main]
+async fn main() -> ExitCode {
+    let args = Command::parse();
+    let result = args.run().await;
+    exit_result(result)
+}
+
+#[test]
+fn verify_cli() {
+    use clap::CommandFactory;
+    Command::command().debug_assert();
+}
+```
+
+#### File `src/command.rs`
+
+* Must define a [command-like struct](#command-like-struct) named `Command`
+* Must define a [subcommand-like enum](#subcommand-like-enum) named `Subcommand`
+
+Example:
+
+```rust
+use std::process::ExitCode;
+use Subcommand::*;
+use errgonomic::map_err;
+use thiserror::Error;
+
+#[derive(clap::Parser, Debug)]
+#[command(author, version, about, propagate_version = true)]
+pub struct Command {
+    #[command(subcommand)]
+    subcommand: Subcommand,
+}
+
+#[derive(clap::Subcommand, Clone, Debug)]
+pub enum Subcommand {
+    Print(PrintCommand),
+}
+
+impl Command {
+    pub async fn run(self) -> Result<ExitCode, CommandRunError> {
+        use CommandRunError::*;
+        let Self {
+            subcommand,
+        } = self;
+        match subcommand {
+            Print(command) => map_err!(command.run().await, PrintCommandRunFailed),
+        }
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum CommandRunError {
+    #[error("failed to run print command")]
+    PrintCommandRunFailed { source: PrintCommandRunError },
+}
+
+mod print_command;
+
+pub use print_command::*;
+```
+
+### Definitions
+
+#### Command-like struct
+
+A struct that contains fields for CLI arguments.
+
+* Must have a name that is a concatenation of all command names leading up to and including this command name, and ends with `Command` (see example above)
+* Must derive `clap::Parser`
+* Must be attached to a parent module: if it's a top-level command: `src/lib.rs`, else: `src/command.rs`
+* May contain a `subcommand` field annotated with `#[command(subcommand)]`
+* Must have a `pub async fn run`
+  * Must return a `Result` with `ExitCode`
+  * If it contains a `subcommand` field: must match on `subcommand` and call `run` of each command
+
+Command example:
+
+* Name: `DbDownloadYcombinatorStartupsCommand`
+* File: `src/command/db_download_ycombinator_startups_command.rs` (attached to `src/command.rs`)
+* Shell command: `cargo run -- db download ycombinator-startups`
+
+#### Subcommand-like enum
+
+An enum that contains variants for CLI subcommands.
+
+* Must have a name that is a concatenation of all command names leading up to and including this command name, and ends with `Subcommand` (see example above)
+* Must derive `clap::Subcommand`
+* Must be located in the same file as its parent command struct
+* Each variant must be a tuple variant containing exactly one command
+
+Subcommand example:
+
+* Name: `DbDownloadSubcommand`
+* File: `src/cli/db_command/db_download_command.rs` (same file as its parent `DbDownloadCommand`)
+
+#### Proxy command-like struct
+
+A [command-like struct](#command-like-struct) that has a `subcommand` field and calls `run` on each subcommand.
+
+Proxy command example:
+
+* Name: `DbCommand`
+* File: `src/command/db_command.rs` (attached to `src/command.rs`)
 
 ## Concepts for fjall-cli package
 
@@ -2014,7 +2211,7 @@ cfg_if::cfg_if! {
 #### File `src/main.rs`
 
 * Must define a `main` entrypoint
-* Must define a basic test for the top-level command
+* Must define a `verify_cli` test for the top-level command exactly as in the example below (with `debug_assert`)
 
 Example:
 
@@ -2151,16 +2348,19 @@ exclude = [
     "*.local.*",
     "doc/dev",
     "specs",
+    "AGENTS.ts",
     "README.ts",
     "AGENTS*.md",
     "CLAUDE*.md",
+    "deno.lock",
     "deno.json",
     "commitlint.config.mjs",
+    "fnox.toml",
     "lefthook.yml",
     "mise.toml",
     "rumdl.toml",
     "rustfmt.toml",
-    "yolobox"
+    ".yolobox"
 ]
 
 [package.metadata.details]
@@ -2186,6 +2386,18 @@ tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi
 [dev-dependencies]
 tempdir = "0.3.7"
 xshell = "0.3.0-pre.2"
+```
+
+### fnox.toml
+
+```toml
+#:schema https://fnox.jdx.dev/schema.json
+
+if_missing = "error"
+
+[providers]
+keychain = { type = "keychain", service = "rust-public-cli-template" }
+pass = { type = "password-store", prefix = "rust-public-cli-template/" }
 ```
 
 ### src/main.rs
@@ -2278,6 +2490,11 @@ fn verify_cli() {
 //! fjall keyspace-count
 //! # 0
 //! ```
+
+#![deny(clippy::arithmetic_side_effects)]
+#![cfg_attr(not(test), deny(unused_crate_dependencies))]
+
+use tokio as _;
 
 mod command;
 

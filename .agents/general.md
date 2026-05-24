@@ -85,6 +85,13 @@ Notes:
 * Use `cargo add` to add dependencies at their latest versions
 * Set the timeout to 300000 ms for the following commands: `mise run agent:on:stop`, `cargo build`, `git commit`
 
+## Recommended crates
+
+* `errgonomic` for error handling
+* `strum` for enum derives
+* `subtype` for defining newtypes
+* `tempfile` for creating temp dirs or files
+
 ## Files
 
 * The file name must match the name of the primary item in this file (for example: a file with `struct User` must be named `user.rs`)
@@ -105,6 +112,36 @@ Notes:
   ```rust
   use crate::foo;
   ```
+* Prefer short item paths over long item paths (use `use` statement), unless it's necessary for disambiguation. For example:
+  * Good:
+    ```rust
+    use clap::ValueEnum;
+    use serde::{Deserialize, Serialize};
+  
+    #[derive(ValueEnum, Serialize, Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
+  * Good (`serde` and `rkyv` prefixes are necessary for disambiguation):
+    ```rust
+    use clap::ValueEnum;
+
+    #[derive(ValueEnum, From, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
+  * Bad (`clap` and `serde` prefixes are not necessary for disambiguation because their trait names are unique in this module):
+    ```rust
+    #[derive(clap::ValueEnum, serde::Serialize, serde::Deserialize, Eq, PartialEq, Hash, Clone, Copy, Debug)]
+    pub enum Side {
+        Buy,
+        Sell,
+    }
+    ```
 
 ## Items
 
@@ -127,33 +164,48 @@ Notes:
 
 ## Functions
 
+* Implement proper error handling using macros from `errgonomic` crate instead of `unwrap` or `expect` (in normal code and in tests)
+  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * Prefer streams and iterators:
-  * Specifics:
-    * Prefer `impl Stream` or `impl IntoIterator` for collection inputs
-    * Prefer `impl Iterator` for collection outputs (avoid large in-memory `Vec`)
+  * Guidelines for inputs:
+    * If the function uses methods that are available only for a specific collection type:
+      * Then: prefer taking a specific collection type as input.
+      * Else: prefer taking an `impl Stream` or `impl IntoIterator` as input.
+  * Guidelines for outputs:
+    * If the function return type is naturally an iterator (for example, the function returns the output of a `map` or `filter`):
+      * Then: prefer returning an `impl Iterator` as output (there's no need to collect into `Vec`).
+      * Else: prefer returning a specific collection type as output.
   * Examples:
     * Good:
       ```rust
-      pub fn foo<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
-          // do something
+      /// This is good because the function doesn't use any type-specific methods, only generic Iterator trait methods
+      /// This is good because the function naturally returns an Iterator, not a specific collection type
+      pub fn filter_non_empty_strings<'a>(inputs: impl IntoIterator<Item = &'a str>) -> impl Iterator<Item = &'a str> {
+          inputs.into_iter().filter(|i| i.is_empty().not())
       }
-    
-      pub fn bar(inputs: impl IntoIterator<Item = String>) -> impl Iterator<Item = String> {
-          // do something
+
+      /// This is good because the function uses Vec-specific method `extend_from_slice`, so it can't take a generic `impl IntoIterator`
+      fn extend_args(mut args: Vec<String>, extra_args: &[String]) -> Vec<String> {
+          args.extend_from_slice(extra_args);
+          args
       }
       ```
     * Bad:
-      ```rust
-      /// This is bad because it is not general enough
-      pub fn foo(inputs: &[str]) -> Vec<&'a str> {}
-    
-      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec, which is bad for performance
+    * ```rust
+      /// This is bad because it needlessly converts a Vec into iter and then collects back into Vec
+      pub fn filter_non_empty_strings(inputs: Vec<&str>) -> Vec<&str> {
+          inputs
+              .into_iter()
+              .filter(|i| i.is_empty().not())
+              .collect::<Vec<_>>()
+      }
+      
+      /// This is bad because it is not general enough and also forces the caller to collect the strings into a vec for input, which is bad for performance
       pub fn bar(inputs: Vec<String>) -> Vec<String> {}
       ```
 * Prefer implementing and use `From` or `TryFrom` for conversions between types (instead of converting in-place)
+* Don't use early-return fast-path guards for empty vecs, iterators, streams (i.e. don't use `if items.is_empty() { return ...; }`)
 * Use destructuring assignment for tuple arguments, for example: `fn try_from((name, parent_key): (&str, GroupKey)) -> ...`
-* Implement proper error handling instead of `unwrap` or `expect` (in normal code and in tests)
-  * Use `expect` only in exceptional cases where you can prove that it always succeeds, and provide the proof as the first argument to `expect` (the proof must start with "always succeeds because")
 * Use iterators instead of for loops. For example:
   * Good:
     ```rust
@@ -343,14 +395,30 @@ Note: the arithmetic operators and traits are banned because they may panic or s
 
 Note: the index access operators and traits are banned because they may panic.
 
-## Cargo.toml
+## Test fn
 
-* Don't define package features contain only a single optional dependency (such features are already defined by cargo automatically)
+A function marked with `#[test]` or `#[tokio::test]`.
+
+* Must return a `Result`
+* Must implement proper error handling via `errgonomic` crate
+* Should use macros from `assertables` crate
+  * Should use `assert_infix` instead of `assert_gt`, `assert_ge`, `assert_lt`, `assert_le`, `assert_eq`
 
 ## Macros
 
 * Write `macro_rules!` macros to reduce boilerplate
 * If you see similar code in different places, write a macro and replace the similar code with a macro call
+
+## Shell
+
+* For shell scripts and commands that will be read by the user (written per direct request of the user):
+  * Use long options
+* For shell scripts and commands what won't be read by the user (written to accomplish a local task):
+  * Use short options
+
+## Cargo.toml
+
+* Don't define package features with only a single optional dependency (such features are already defined by cargo automatically)
 
 ## Sandbox
 
