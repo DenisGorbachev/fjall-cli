@@ -2397,8 +2397,8 @@ xshell = "0.3.0-pre.2"
 if_missing = "error"
 
 [providers]
-keychain = { type = "keychain", service = "rust-public-cli-template" }
-pass = { type = "password-store", prefix = "rust-public-cli-template/" }
+keychain = { type = "keychain", service = "fjall-cli" }
+pass = { type = "password-store", prefix = "fjall-cli/" }
 ```
 
 ### src/main.rs
