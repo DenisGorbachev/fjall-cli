@@ -6,7 +6,7 @@ permissions:
   pull-requests: read
 
 env:
-  FNOX_NON_INTERACTIVE: "1"
+  FNOX_NON_INTERACTIVE: "true"
   RUSTFLAGS: >-
     -Dwarnings
     -Clink-arg=-fuse-ld=mold
