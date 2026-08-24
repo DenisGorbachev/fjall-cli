@@ -1,4 +1,5 @@
 use errgonomic::{handle, handle_bool, handle_opt};
+use std::io::Error as IoError;
 use std::num::ParseIntError;
 use std::string::FromUtf8Error;
 use tempdir::TempDir;
@@ -95,7 +96,7 @@ pub enum FullCliFlowError {
     ShellNewFailed { source: xshell::Error },
 
     #[error("failed to create temp dir")]
-    TempDirNewFailed { source: std::io::Error },
+    TempDirNewFailed { source: IoError },
 
     #[error("failed to run insert command")]
     InsertRunFailed { source: xshell::Error },

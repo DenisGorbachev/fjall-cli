@@ -1,13 +1,13 @@
-[package]
-name = "fjall-cli"
+[workspace]
+resolver = "3"
+
+[workspace.package]
 version = "1.0.1"
 edition = "2024"
 rust-version = "1.91.0"
-description = "CLI for Fjall database"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/DenisGorbachev/fjall-cli"
 repository = "https://github.com/DenisGorbachev/fjall-cli"
-readme = "README.md"
 keywords = []
 categories = []
 exclude = [
@@ -23,19 +23,45 @@ exclude = [
     "deno.json",
     "commitlint.config.mjs",
     "fnox.toml",
-    "lefthook.yml",
     "mise.toml",
     "rumdl.toml",
     "rustfmt.toml",
     ".yolobox"
 ]
 
+[workspace.metadata.details]
+name = "fjall-cli"
+title = "CLI for Fjall database"
+readme = { generate = true }
+
+[workspace.lints.rust]
+redundant_imports = "deny"
+unused_import_braces = "deny"
+# unused_qualifications must not be "deny" because our code style has multiple `use Foo::*;`, and some macros (derive_more::Display, strum::Display, strum::EnumString) produce code with full qualifications
+# unused_qualifications = "deny"
+
+[workspace.lints.clippy]
+absolute_paths = "deny"
+arithmetic_side_effects = "deny"
+
+[package]
+name = "fjall-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "CLI for Fjall database"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+exclude.workspace = true
+
 [package.metadata.details]
 title = "CLI for Fjall database"
-tagline = ""
-summary = ""
-announcement = ""
-readme = { generate = true }
+
+[lints]
+workspace = true
 
 [[bin]]
 name = "fjall"

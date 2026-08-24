@@ -10,6 +10,7 @@
 //! * `keyspace-count` prints the number of keyspaces.
 //!
 //! Exit codes for `keyspace <KEYSPACE> contains <KEY>`:
+//!
 //! * `0` - key exists
 //! * `1` - error occurred
 //! * `127` - key does not exist
@@ -17,6 +18,7 @@
 //! ## Byte encodings
 //!
 //! Commands that accept key/value bytes support `--*-encoding` with:
+//!
 //! * `string` (default)
 //! * `hex`
 //! * `path`
@@ -63,11 +65,6 @@
 //! fjall keyspace-count
 //! # 0
 //! ```
-
-#![deny(clippy::arithmetic_side_effects)]
-#![cfg_attr(not(test), deny(unused_crate_dependencies))]
-
-use tokio as _;
 
 mod command;
 
