@@ -297,7 +297,6 @@ Requirements:
 - `string` must accept any valid UTF-8 string and produce the corresponding bytes.
 - `hex` must accept an even-length sequence of hexadecimal characters (case-insensitive).
 - `path` must accept an existing filesystem path and read bytes without modification.
-
 - Must map the CLI argument:
   - `empty`: from `String` to an empty `Vec<u8>` (needed to represent empty values) (the CLI argument must be exactly equal to "-" in this case).
   - `string`: from `String` to `Vec<u8>` (without changes).
