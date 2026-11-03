@@ -2096,15 +2096,6 @@ cfg_if::cfg_if! {
 }
 ````
 
-## Project info
-
-### `git remote`
-
-```shell
-origin
-repoconf-rust-pre-public-cli-template
-```
-
 ## Project files
 
 ### mise.toml
@@ -2152,7 +2143,7 @@ run = [{ tasks = ["lint", "test"] }]
 depends = ["test:code", "test:docs"]
 
 [tasks."lint"]
-depends = ["lint:name", "lint:configs", "lint:code", "lint:code:style", "lint:shell", "lint:docs", "lint:reports"]
+depends = ["lint:name", "lint:configs", "lint:code", "lint:code:style", "lint:shell", "lint:docs", "lint:generated", "lint:reports"]
 
 [tasks."lint:name"]
 run = [{ task = "fix:name", args = ["--check"] }]
@@ -2178,6 +2169,9 @@ run = '''shuck --config "lint.source-paths = ['$HOME']" check --extend-exclude '
 
 [tasks."lint:docs"]
 run = "rumdl check"
+
+[tasks."lint:generated"]
+run = ["./AGENTS.ts", "./README.ts"]
 
 [tasks."test:code"]
 run = "fnox --profile test exec --replace -- cargo nextest run --locked --workspace --all-features --no-tests warn"
@@ -2243,10 +2237,10 @@ depends = ["fix:name", "fix:configs", "fix:code"]
 run = [{ task = "gen:agents" }]
 
 [tasks."gen:readme"]
-run = "./README.ts"
+run = "./README.ts --fix"
 
 [tasks."gen:agents"]
-run = "./AGENTS.ts"
+run = "./AGENTS.ts --fix"
 
 [tasks."commitlint"]
 run = "commitlint --extends \"$(mise where npm:@commitlint/config-conventional)/node_modules/@commitlint/config-conventional/lib/index.js\""
@@ -2296,21 +2290,6 @@ age = { type = "age", recipients = [
 ] }
 ```
 
-### ~/.cargo/config.toml
-
-```toml
-[build]
-target = "host-tuple"
-# In the sandbox, ~/workspace is mounted from macOS, while Cargo's cache home is on the container-local filesystem.
-# Concurrent Cargo commands have failed when compilation intermediates were stored on the macOS mount.
-# Give each workspace its own local build directory: one directory shared by all workspaces would serialize their builds and let `cargo clean` in one workspace remove another workspace's artifacts.
-# sccache shares reusable compiler outputs without sharing mutable Cargo state.
-build-dir = "{cargo-cache-home}/build/{workspace-path-hash}"
-
-[net]
-git-fetch-with-cli = true
-```
-
 ### Cargo.toml
 
 ```toml
@@ -2333,6 +2312,7 @@ exclude = [
     "specs",
     "AGENTS.ts",
     "CargoMetadata.ts",
+    "GeneratedFile.ts",
     "README.ts",
     "AGENTS*.md",
     "deno.lock",
