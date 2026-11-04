@@ -2021,25 +2021,25 @@ xshell = "0.3.0-pre.2"
 //!
 //! ## Subcommands
 //!
-//! * `keyspace <KEYSPACE> <SUBCOMMAND>` runs keyspace-scoped operations:
+//! - `keyspace <KEYSPACE> <SUBCOMMAND>` runs keyspace-scoped operations:
 //!   `iter`, `get`, `insert`, `contains`, `len`, `disk-size`, `clear`, `delete`.
-//! * `list-keyspace-names` lists keyspace names (one per line).
-//! * `keyspace-count` prints the number of keyspaces.
+//! - `list-keyspace-names` lists keyspace names (one per line).
+//! - `keyspace-count` prints the number of keyspaces.
 //!
 //! Exit codes for `keyspace <KEYSPACE> contains <KEY>`:
 //!
-//! * `0` - key exists
-//! * `1` - error occurred
-//! * `127` - key does not exist
+//! - `0` - key exists
+//! - `1` - error occurred
+//! - `127` - key does not exist
 //!
 //! ## Byte encodings
 //!
 //! Commands that accept key/value bytes support `--*-encoding` with:
 //!
-//! * `string` (default)
-//! * `hex`
-//! * `path`
-//! * `empty` (argument must be exactly `-`)
+//! - `string` (default)
+//! - `hex`
+//! - `path`
+//! - `empty` (argument must be exactly `-`)
 //!
 //! `keyspace <KEYSPACE> disk-size` flushes pending writes for that keyspace before
 //! measuring bytes on disk, so recent inserts are reflected in the reported size.
