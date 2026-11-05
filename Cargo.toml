@@ -17,7 +17,6 @@ exclude = [
     "specs",
     "AGENTS.ts",
     "CargoMetadata.ts",
-    "GeneratedFile.ts",
     "README.ts",
     "AGENTS*.md",
     "deno.lock",
@@ -76,7 +75,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.11", features = ["derive", "env"] }
-errgonomic = { version = "0.5.3" }
+errgonomic = { version = "0.6.0" }
 fjall = "3.0.2"
 hex = "0.4.3"
 strum = { version = "0.27.2", features = ["derive"] }
