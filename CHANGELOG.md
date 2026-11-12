@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0](https://github.com/DenisGorbachev/fjall-cli/compare/v1.0.1...v2.0.0) - 2026-11-12
+
+### Fixed
+
+- validate generated files before commits
+- CLAUDE
+- Cargo
+- shuck
+- install-hooks
+- AGENTS
+- CargoMetadata
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- support
+- README
+- refactor to support workspaces
+- update errgonomic
+- update errgonomic
+- clippy
+- clippy
+- general
+- Cargo
+- absolute_paths
+- Cargo
+- bump Rust version
+- AGENTS
+- AGENTS
+- clippy::arithmetic_side_effects
+- AGENTS
+- fnox
+- mv yolobox .yolobox
+- configure deno not to put modules under node_modules
+- idiomatic_version_file_enable_tools
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- update errgonomic
+- remove ignores for cargo-machete
+
+### Other
+
+- remove redundant homepages
+- manage generated Markdown with Nushell
+- separate CI tests and validate Nushell
+- refresh errgonomic documentation
+- *(deps)* update errgonomic to 0.5.3
+- update errgonomic
+
 ## [1.0.1](https://github.com/DenisGorbachev/fjall-cli/compare/v1.0.0...v1.0.1) - 2026-02-16
 
 ### Fixed
