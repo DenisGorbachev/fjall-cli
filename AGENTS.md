@@ -1596,6 +1596,9 @@ name = "rust-public-cli-template"
 title = ""
 readme = { generate = false }
 
+[workspace.lints.cargo]
+unused_dependencies = "deny"
+
 [workspace.lints.rust]
 redundant_imports = "deny"
 unused_import_braces = "deny"
@@ -1643,8 +1646,6 @@ tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi
 
 ```rust
 //! This is a module-level comment for a Rust lib
-
-#![cfg_attr(not(test), deny(unused_crate_dependencies))]
 
 mod command;
 
