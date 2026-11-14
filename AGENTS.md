@@ -2003,7 +2003,7 @@ errgonomic = { version = "0.6.0" }
 fjall = "3.0.2"
 hex = "0.4.3"
 strum = { version = "0.27.2", features = ["derive"] }
-thiserror = "2.0.17"
+thiserror = "2.0.21"
 tokio = { version = "1.39.2", features = ["macros", "fs", "net", "rt", "rt-multi-thread"] }
 
 [dev-dependencies]
